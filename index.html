@@ -1,0 +1,569 @@
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App de Finanzas</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Sección 1: Resumen -->
+    <section class="summary-section">
+      <div class="summary-header">
+        <h2>RESUMEN GENERAL</h2>
+        <div class="summary-buttons">
+          <div class="backup-dropdown">
+            <button id="backupButton" class="backup-btn">Respaldo</button>
+            <div id="backupDropdown" class="backup-options">
+              <button id="backupSave" class="backup-option">Respaldar</button>
+              <button id="backupRestore" class="backup-option">Restaurar</button>
+            </div>
+          </div>
+          <button id="hideButton" class="hide-btn">Ocultar</button>
+        </div>
+      </div>
+      <div class="summary-content">
+        <!-- Left side: Total Balance -->
+        <div class="total-balance">
+          <h3>Balance Total</h3>
+          <p id="totalAmount">$0</p>
+          <div class="balance-indicators">
+            <div class="balance-indicator">
+              <span class="label">Fecha:</span>
+              <span class="value" id="currentDate">Cargando...</span>
+            </div>
+            <div class="balance-indicator">
+              <span class="label">Hora (GMT-3):</span>
+              <span class="value" id="currentTime">Cargando...</span>
+            </div>
+            <div class="balance-indicator">
+              <span class="label">USD:</span>
+              <span class="value" id="usdValue">Cargando...</span>
+            </div>
+          </div>
+        </div>
+        <!-- Middle: Account Balances -->
+        <div class="accounts-summary">
+          <h3>CUENTAS</h3>
+          <div class="account-buttons">
+            <button class="add-account-btn">Añadir Cuenta</button>
+            <button class="delete-account-btn" disabled>Eliminar Cuenta</button>
+          </div>
+          <div class="accounts-by-treatment">
+            <div class="treatment-section activos-section">
+              <h4>Activos</h4>
+              <p class="treatment-total" id="activosTotal">$0</p>
+              <div class="accounts-list" id="activosList">
+                <!-- Activos accounts loaded dynamically -->
+              </div>
+            </div>
+            <div class="treatment-section pasivos-section">
+              <h4>Pasivos</h4>
+              <p class="treatment-total" id="pasivosTotal">$0</p>
+              <div class="accounts-list" id="pasivosList">
+                <!-- Pasivos accounts loaded dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Right side: External Data -->
+        <div class="external-data">
+          <h3>DATOS EXTERNOS</h3>
+          <div class="external-data-boxes">
+            <div class="data-box">
+              <h4>TRANSBANK</h4>
+              <div class="data-content">
+                <p>Sin datos</p>
+              </div>
+            </div>
+            <div class="data-box">
+              <h4>DIF. SEMANA MARCOS</h4>
+              <div class="data-content">
+                <p>Sin datos</p>
+              </div>
+            </div>
+            <div class="data-box">
+              <h4>RETENCION ALDO</h4>
+              <div class="data-content">
+                <p id="aldoRetentionValue">$0</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Modal para añadir/editar cuenta -->
+    <div id="accountModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 id="modalTitle">Nueva Cuenta</h2>
+        <form id="accountForm">
+          <input type="hidden" id="isEditing" value="false">
+          <div class="form-group">
+            <label for="accountName">Nombre de Cuenta:</label>
+            <input type="text" id="accountName" required>
+          </div>
+          <div class="form-group">
+            <label for="accountType">Tipo de Cuenta:</label>
+            <select id="accountType" required>
+              <option value="corriente">Cuenta Corriente</option>
+              <option value="credito">Tarjeta de Crédito</option>
+              <option value="dolar">Cuenta Dolar</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="accountTreatment">Tratamiento:</label>
+            <select id="accountTreatment" required>
+              <option value="activos">Activos</option>
+              <option value="pasivos">Pasivos</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="initialBalance">Saldo inicial:</label>
+            <input type="number" id="initialBalance" required step="0.01">
+          </div>
+          <div class="form-group checkbox-group">
+            <label for="isSettled">
+              <input type="checkbox" id="isSettled">
+              Botón Saldado
+            </label>
+          </div>
+          <button type="submit" id="accountFormSubmit">Crear Cuenta</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Secciones 2 y 3: Transacciones e Historial lado a lado -->
+    <div class="transactions-container">
+      <!-- Sección 2: Registro de Transacciones -->
+      <section class="transaction-section">
+        <div id="transactionPanel">
+          <h2>Registrar Transacción</h2>
+          <form id="transactionForm">
+            <div class="form-group">
+              <label for="date">Fecha:</label>
+              <input type="date" id="date" required>
+            </div>
+            <div class="form-group">
+              <label for="account">Nombre de Cuenta:</label>
+              <select id="account" required>
+                <option value="">Seleccione una cuenta</option>
+                <!-- Las cuentas se cargarán dinámicamente -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tipo:</label>
+              <input type="hidden" id="type" value="ingreso" required>
+              <div class="type-buttons">
+                <button class="type-button ingreso selected" data-type="ingreso">Ingreso</button>
+                <button class="type-button gasto" data-type="gasto">Gasto</button>
+                <button class="type-button transferencia" data-type="transferencia">Transferencia</button>
+              </div>
+            </div>
+            <div class="form-group" id="destinationAccountGroup" style="display: none;">
+              <label for="destinationAccount">Cuenta Destino:</label>
+              <select id="destinationAccount" required disabled>
+                <option value="">Seleccione cuenta destino</option>
+                <!-- Las cuentas se cargarán dinámicamente -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="description">Descripción:</label>
+              <input type="text" id="description" required>
+            </div>
+            <div class="form-group installment-fields" style="display: none;">
+              <div class="form-group">
+                <label for="currentInstallment">N° de cuota:</label>
+                <input type="number" id="currentInstallment" min="1" required disabled>
+              </div>
+              <div class="form-group">
+                <label for="totalInstallments">Cant. Cuotas:</label>
+                <input type="number" id="totalInstallments" min="1" required disabled>
+              </div>
+            </div>
+            <div class="form-group usd-amount-field" style="display: none;">
+              <label for="usdAmount">Monto USD:</label>
+              <input type="number" id="usdAmount" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label for="amount">Monto:</label>
+              <input type="number" id="amount" required step="0.01">
+            </div>
+            <button type="submit">Registrar</button>
+          </form>
+          <button id="showCalculator" class="calculator-btn">Calculadora</button>
+        </div>
+        
+        <div id="calculatorPanel" style="display: none;">
+          <h2>Calculadora</h2>
+          <div class="calculator">
+            <div class="calculator-display">
+              <input type="text" id="calculatorInput" readonly>
+            </div>
+            <div class="calculator-keys">
+              <button type="button" class="calc-key" data-key="7">7</button>
+              <button type="button" class="calc-key" data-key="8">8</button>
+              <button type="button" class="calc-key" data-key="9">9</button>
+              <button type="button" class="calc-key operator" data-key="/">/</button>
+              
+              <button type="button" class="calc-key" data-key="4">4</button>
+              <button type="button" class="calc-key" data-key="5">5</button>
+              <button type="button" class="calc-key" data-key="6">6</button>
+              <button type="button" class="calc-key operator" data-key="*">*</button>
+              
+              <button type="button" class="calc-key" data-key="1">1</button>
+              <button type="button" class="calc-key" data-key="2">2</button>
+              <button type="button" class="calc-key" data-key="3">3</button>
+              <button type="button" class="calc-key operator" data-key="-">-</button>
+              
+              <button type="button" class="calc-key" data-key="0">0</button>
+              <button type="button" class="calc-key" data-key=".">.</button>
+              <button type="button" class="calc-key equals" data-key="=">=</button>
+              <button type="button" class="calc-key operator" data-key="+">+</button>
+              
+              <button type="button" class="calc-key clear" data-key="c">C</button>
+              <button type="button" class="calc-key backspace" data-key="backspace">⌫</button>
+              <button id="backToTransaction" class="calc-key return">Volver</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sección 3: Historial -->
+      <section class="history-section">
+        <h2>Visor de Cuentas</h2>
+        <div class="transactions-list" id="transactionsList">
+          <!-- Las transacciones se cargarán dinámicamente -->
+        </div>
+      </section>
+    </div>
+
+    <!-- New FIGARO header panel -->
+    <section class="figaro-header">
+      <h2>FIGARO</h2>
+    </section>
+
+    <!-- New Figaro Summary Panels -->
+    <div class="figaro-summary-panels">
+      <div class="figaro-panel resumen-general">
+        <h3>Resumen General Figaro</h3>
+        <div class="figaro-content">
+          <div class="figaro-subpanels">
+            <div class="figaro-subpanel">
+              <h4 class="">Totales Finales</h4>
+              <div class="figaro-subpanel-content">
+                <table class="totales-table">
+                  <thead>
+                    <tr>
+                      <th>TOTALES</th>
+                      <th>ALDO</th>
+                      <th>MARCOS</th>
+                      <th>OTRO</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>TF Ventas</td>
+                      <td>$0</td>
+                      <td>$0</td>
+                      <td>$0</td>
+                    </tr>
+                    <tr>
+                      <td>TF Venta Tarjeta</td>
+                      <td>$0</td>
+                      <td>$0</td>
+                      <td>$0</td>
+                    </tr>
+                    <tr style="background-color: rgba(39, 174, 96, 0.8); color: white; font-weight: bold;">
+                      <td style="color: white; font-weight: bold;">TF Porc.</td>
+                      <td>$0</td>
+                      <td>$0</td>
+                      <td>$0</td>
+                    </tr>
+                    <tr>
+                      <td>Retención</td>
+                      <td>$0</td>
+                      <td>$0</td>
+                      <td>$0</td>
+                    </tr>
+                    <tr>
+                      <td>Líquido</td>
+                      <td>$0</td>
+                      <td>$0</td>
+                      <td>$0</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="figaro-subpanel">
+              <h4 class="">Resumen Mensual</h4>
+              <div class="figaro-subpanel-content" id="resumenMensualContent">
+                <!-- Content will be added dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="figaro-panel indicadores">
+        <h3>Indicadores Figaro</h3>
+        <div class="figaro-content">
+          <!-- Content will be added dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Add new full-width panel for Semanas Figaro -->
+    <div class="figaro-semanas-panel">
+      <h3>Semanas Figaro</h3>
+      <div class="figaro-semanas-content">
+        <!-- Content will be added dynamically -->
+      </div>
+    </div>
+
+    <!-- Sección de registro de ventas y historial -->
+    <div class="salon-section">
+      <!-- Sección de registro de ventas -->
+      <section class="salon-registration">
+        <h2>Registrar Ventas</h2>
+        <form id="salonForm" class="salon-form">
+          <div class="form-group">
+            <label for="salonWeek">Semana:</label>
+            <select id="salonWeek" required>
+              <option value="1">Semana 1</option>
+              <option value="2">Semana 2</option>
+              <option value="3">Semana 3</option>
+              <option value="4">Semana 4</option>
+              <option value="5">Semana 5</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="salonDate">Fecha:</label>
+            <input type="date" id="salonDate" required>
+          </div>
+          <div class="form-group">
+            <label>Peluquero:</label>
+            <input type="hidden" id="hairdresser" value="ALDO" required>
+            <div class="hairdresser-buttons">
+              <button class="hairdresser-button selected" data-hairdresser="ALDO">ALDO</button>
+              <button class="hairdresser-button" data-hairdresser="MARCOS">MARCOS</button>
+              <button class="hairdresser-button" data-hairdresser="OTRO">OTRO</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Tipo de Pago:</label>
+            <input type="hidden" id="paymentType" value="efectivo">
+            <div class="payment-buttons">
+              <button class="payment-button selected" data-type="efectivo">Efectivo</button>
+              <button class="payment-button" data-type="debito">Débito</button>
+              <button class="payment-button" data-type="credito">Crédito</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="serviceCode">Código:</label>
+            <input type="text" id="serviceCode" required>
+          </div>
+          <div class="form-group">
+            <label for="salonAmount">Monto:</label>
+            <input type="number" id="salonAmount" required step="0.01">
+          </div>
+          <button type="submit">Registrar Venta</button>
+        </form>
+      </section>
+
+      <!-- Sección de historial de ventas -->
+      <section class="salon-history">
+        <h2>Historial de Ventas</h2>
+        <div class="salon-filter-buttons">
+          <button id="deleteAllSales" class="delete-all-btn">Borrar todo</button>
+          <button id="cardFilter" class="filter-btn">Filtro Tarjeta</button>
+          <div class="date-filter-container">
+            <input type="date" id="dateFilterInput" class="date-filter-input">
+          </div>
+        </div>
+        <div class="totals-panel">
+          <!-- Panel de totales vacío -->
+        </div>
+        <div class="salon-sales">
+          <div class="sales-header">
+            <span>Sem</span>
+            <span>Fecha</span>
+            <span>Peluquero</span>
+            <span>Código</span>
+            <span>Monto</span>
+            <span>Tipo Pago</span>
+            <span>Comisión</span>
+            <span>Comisión + IVA</span>
+            <span>Neto</span>
+            <span>Fecha Abono</span>
+            <span>Pagado</span>
+            <span>-</span>
+          </div>
+          <div id="salonSalesList">
+            <!-- Las ventas se cargarán dinámicamente -->
+          </div>
+        </div>
+      </section>
+      <section class="total-abonos-panel">
+        <h2>Total Abonos</h2>
+      </section>
+    </div>
+    <section class="figaro-header">
+      <h2>PELUQUEROS</h2>
+      <div class="black-panel">
+        <button class="black-panel-button" id="aldoButton">ALDO</button>
+        <button class="black-panel-button">MARCOS</button>
+        <button class="black-panel-button">OTRO</button>
+      </div>
+    </section>
+
+    <!-- Add new section for Aldo's panels -->
+    <div class="aldo-panels">
+      <div class="aldo-panel semanas-aldo">
+        <h3>Semanas Aldo</h3>
+        <div class="aldo-content">
+          <!-- Content will be added dynamically -->
+        </div>
+      </div>
+      <div class="aldo-panel totales-aldo">
+        <div class="panel-header-container">
+          <h3>Totales Aldo</h3>
+          <div class="header-indicators">
+            <div class="header-indicator">
+              RET: <span class="commission-value" data-type="ret" data-hairdresser="aldo">14.5%</span>
+            </div>
+          </div>
+        </div>
+        <div class="aldo-content">
+          <!-- Content will be added dynamically -->
+        </div>
+      </div>
+      <div class="aldo-panel ventas-aldo">
+        <div class="panel-header-container">
+          <h3>Ventas Aldo</h3>
+          <div class="header-indicators">
+            <div class="header-indicator">
+              REC: <span class="commission-value" data-type="rec" data-hairdresser="aldo">3%</span>
+            </div>
+            <div class="header-indicator">
+              COM: <span class="commission-value" data-type="com" data-hairdresser="aldo">35%</span>
+            </div>
+          </div>
+        </div>
+        <div class="aldo-content">
+          <div class="ventas-table-header">
+            <div class="ventas-table-cell">Semana</div>
+            <div class="ventas-table-cell">Fecha</div>
+            <div class="ventas-table-cell">Código</div>
+            <div class="ventas-table-cell">Monto</div>
+            <div class="ventas-table-cell">Tipo Pago</div>
+            <div class="ventas-table-cell">Neto</div>
+            <div class="ventas-table-cell">REC</div>
+            <div class="ventas-table-cell">COM</div>
+          </div>
+          <!-- Content will be added dynamically -->
+        </div>
+      </div>
+      <div class="aldo-panel boletas-aldo">
+        <h3>Boletas Aldo</h3>
+        <div class="aldo-content">
+          <!-- Content will be added dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Add new section for Marcos' panels -->
+    <div class="marcos-panels">
+      <div class="marcos-panel semanas-marcos">
+        <h3>Semanas Marcos</h3>
+        <div class="marcos-content">
+          <!-- Content will be added dynamically -->
+        </div>
+      </div>
+      <div class="marcos-panel totales-marcos">
+        <div class="panel-header-container">
+          <h3>Totales Marcos</h3>
+          <div class="header-indicators">
+            <div class="header-indicator">
+              RET: <span class="commission-value" data-type="ret" data-hairdresser="marcos">14.5%</span>
+            </div>
+          </div>
+        </div>
+        <div class="marcos-content">
+          <!-- Content will be added dynamically -->
+        </div>
+      </div>
+      <div class="marcos-panel ventas-marcos">
+        <div class="panel-header-container">
+          <h3>Ventas Marcos</h3>
+          <div class="header-indicators">
+            <div class="header-indicator">
+              REC: <span class="commission-value" data-type="rec" data-hairdresser="marcos">3%</span>
+            </div>
+            <div class="header-indicator">
+              COM: <span class="commission-value" data-type="com" data-hairdresser="marcos">35%</span>
+            </div>
+          </div>
+        </div>
+        <div class="marcos-content">
+          <!-- Content will be added dynamically --> 
+        </div>
+      </div>
+      <div class="marcos-panel boletas-marcos">
+        <h3>Boletas Marcos</h3>
+        <div class="marcos-content">
+          <!-- Content will be added dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Add new section for Otro's panels -->
+    <div class="otro-panels">
+      <div class="otro-panel semanas-otro">
+        <h3>Semanas Otro</h3>
+        <div class="otro-content">
+          <!-- Content will be added dynamically -->
+        </div>
+      </div>
+      <div class="otro-panel totales-otro">
+        <div class="panel-header-container">
+          <h3>Totales Otro</h3>
+          <div class="header-indicators">
+            <div class="header-indicator">
+              RET: <span class="commission-value" data-type="ret" data-hairdresser="otro">14.5%</span>
+            </div>
+          </div>
+        </div>
+        <div class="otro-content">
+          <!-- Content will be added dynamically -->
+        </div>
+      </div>
+      <div class="otro-panel ventas-otro">
+        <div class="panel-header-container">
+          <h3>Ventas Otro</h3>
+          <div class="header-indicators">
+            <div class="header-indicator">
+              REC: <span class="commission-value" data-type="rec" data-hairdresser="otro">3%</span>
+            </div>
+            <div class="header-indicator">
+              COM: <span class="commission-value" data-type="com" data-hairdresser="otro">35%</span>
+            </div>
+          </div>
+        </div>
+        <div class="otro-content">
+          <!-- Content will be added dynamically --> 
+        </div>
+      </div>
+      <div class="otro-panel boletas-otro">
+        <h3>Boletas Otro</h3>
+        <div class="otro-content">
+          <!-- Content will be added dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </div>
+</body>
+</html>
