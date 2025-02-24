@@ -2402,7 +2402,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .ventas-table-header,
 .ventas-table-row {
   display: grid;
-  grid-template-columns: 0.8fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr; /* Equal distribution for 8 columns */
+  grid-template-columns: 0.8fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
   gap: 10px;
   padding: 8px 10px;
   align-items: center;
@@ -2416,7 +2416,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .ventas-marcos .ventas-table-row,
 .ventas-otro .ventas-table-header,
 .ventas-otro .ventas-table-row {
-  grid-template-columns: 0.8fr 1fr 1fr 1.2fr 1fr 1fr 1fr 1fr; /* Adjusted ratios for better spacing */
+  grid-template-columns: 0.8fr 1fr 1fr 1.2fr 1fr 1fr 1fr 1fr 1fr; /* Adjusted ratios for better spacing */
 }
 
 .ventas-table-cell {
@@ -3516,4 +3516,82 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   appearance: none;
   text-align: center;
   position: relative;
+}
+
+.marcos-panel.boletas-marcos {
+  height: 510px;
+  overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.marcos-panel.boletas-marcos h3 {
+  flex-shrink: 0;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.marcos-panel.boletas-marcos .marcos-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 10px; /* Add padding for scrollbar */
+  margin-right: -10px; /* Offset padding to maintain alignment */
+}
+
+.marcos-panel.boletas-marcos .marcos-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.marcos-panel.boletas-marcos .marcos-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.marcos-panel.boletas-marcos .marcos-content::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.marcos-panel.boletas-marcos .marcos-content::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.otro-panel.boletas-otro {
+  height: 510px;
+  overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.otro-panel.boletas-otro h3 {
+  flex-shrink: 0;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.otro-panel.boletas-otro .otro-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 10px; /* Add padding for scrollbar */
+  margin-right: -10px; /* Offset padding to maintain alignment */
+}
+
+.otro-panel.boletas-otro .otro-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.otro-panel.boletas-otro .otro-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.otro-panel.boletas-otro .otro-content::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.otro-panel.boletas-otro .otro-content::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
