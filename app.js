@@ -1185,26 +1185,30 @@ function toggleTransactionLock(transactionId) {
 
 async function updateBalanceIndicators() {
   const now = new Date();
-  now.setMinutes(now.getMinutes() + now.getTimezoneOffset());
   
-  const dateStr = now.toLocaleDateString('es-CL', {
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric'
-  });
-  
-  document.getElementById('date').valueAsDate = now;
-  
+  // Set timezone to Punta Arenas, Chile time
   const timeOptions = { 
     hour: '2-digit', 
     minute: '2-digit',
     second: '2-digit',
     hour12: false,
-    timeZone: 'America/Santiago'
+    timeZone: 'America/Punta_Arenas'
   };
+  
+  const dateOptions = {
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric',
+    timeZone: 'America/Punta_Arenas'
+  };
+
+  const dateStr = now.toLocaleDateString('es-CL', dateOptions);
   const timeStr = now.toLocaleTimeString('es-CL', timeOptions);
   
+  document.getElementById('currentDate').textContent = dateStr;
+  document.getElementById('currentTime').textContent = timeStr;
+
   try {
     const response = await fetch('https://mindicador.cl/api/dolar');
     const data = await response.json();
@@ -4410,3 +4414,33 @@ function loadFromLocalStorage() {
   updateFigaroIndicatorsPanel(); // Call updateFigaroIndicatorsPanel first
   updateTotalBalance();       // Then call updateTotalBalance to use the updated indicator value
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadFromLocalStorage();
+
+  const timeOptions = { 
+    timeZone: 'America/Punta_Arenas',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  };
+
+  // Set the initial transaction date based on Punta Arenas timezone
+  const today = new Date();
+  const puntaArenasDate = today.toLocaleDateString('es-CL', timeOptions);
+  const [day, month, year] = puntaArenasDate.split('-');
+  const formattedDate = `${year}-${month}-${day}`;
+  document.getElementById('date').value = formattedDate;
+
+  const updateFormDate = () => {
+    const currentDate = new Date();
+    const puntaArenasFormattedDate = currentDate.toLocaleDateString('es-CL', timeOptions);
+    const [d, m, y] = puntaArenasFormattedDate.split('-');
+    document.getElementById('date').value = `${y}-${m}-${d}`;
+  };
+
+  // Update the form date whenever the balance indicators update
+  setInterval(updateFormDate, 60000); // Update every minute along with other indicators
+
+  // ...rest of the event listeners and initializations
+});
