@@ -1,3 +1,5 @@
+/* Global Styles */
+
 * {
   margin: 0;
   padding: 0;
@@ -1092,6 +1094,11 @@ button:hover {
 .data-box:first-child {
   background: rgba(39, 174, 96, 0.8); /* Changed to match add-account-btn green */
   border: 1px solid rgba(39, 174, 96, 0.9);
+}
+
+.data-box:nth-child(2) {
+  background-color: rgba(231, 76, 60, 0.8); /* Red background color */
+  border: 1px solid rgba(231, 76, 60, 0.9);
 }
 
 /* Add new styles for the salon section */
@@ -3307,4 +3314,206 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-weight: 600;
   font-size: 1.5em;
   font-family: monospace;
+}
+
+.indicator-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.indicator-label {
+  color: white;
+  font-weight: 600;
+  font-size: 0.95em;
+}
+
+.indicator-value {
+  color: white;
+  font-size: 1.2em;
+  font-weight: 700;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  min-width: 100px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.indicator-value:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.edit-indicator-value {
+  color: white;
+  font-size: 1.2em;
+  font-weight: 700;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.edit-indicator-value:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.indicator-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px; 
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px; 
+  margin-bottom: 8px; 
+}
+
+.indicator-label {
+  color: white;
+  font-weight: 600;
+  font-size: 0.9em; 
+}
+
+.indicator-value {
+  color: white;
+  font-size: 1.1em; 
+  font-weight: 700;
+  padding: 2px 6px; 
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px; 
+  min-width: 80px; 
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.indicator-value:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.edit-indicator-value {
+  color: white;
+  font-size: 1.1em; 
+  font-weight: 700;
+  padding: 2px 6px; 
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.indicator-value select {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 1.1em;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  min-width: 80px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  text-align: center;
+}
+
+.indicator-value select:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.indicator-value select option {
+  background: #2c3e50;
+  color: white;
+}
+
+.indicator-value select:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.indicator-value.has-select {
+  position: relative;
+}
+
+.indicator-value.has-select::after {
+  content: "▼";
+  font-size: 0.8em;
+  color: white;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.indicator-value select {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 1.1em;
+  font-weight: 700;
+  padding: 2px 24px 2px 6px; 
+  border-radius: 4px;
+  min-width: 100px; 
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  text-align: center;
+  position: relative;
+}
+
+.indicator-value.has-select {
+  position: relative;
+}
+
+.indicator-value.has-select::after {
+  content: "▼";
+  font-size: 0.7em; 
+  color: rgba(255, 255, 255, 0.8);
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  padding-left: 4px; 
+  border-left: 1px solid rgba(255, 255, 255, 0.2); 
+}
+
+.indicator-value select:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.indicator-value select option {
+  background: #2c3e50;
+  color: white;
+  padding: 4px;
+}
+
+.indicator-value select:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.indicator-value select {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 1.1em;
+  font-weight: 700;
+  padding: 2px 24px 2px 6px; 
+  border-radius: 4px;
+  min-width: 100px; 
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  text-align: center;
+  position: relative;
 }

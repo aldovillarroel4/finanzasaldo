@@ -68,10 +68,18 @@ let hairdresserCommissions = {
   }
 };
 
+let figaroIndicators = {
+  diasHabilesMes: null,
+  metaMes: null,
+  selectedWeek: 1
+};
+
 function formatCurrency(amount) {
   return new Intl.NumberFormat('es-CL', {
     style: 'currency',
-    currency: 'CLP'
+    currency: 'CLP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
   }).format(amount);
 }
 
@@ -104,15 +112,31 @@ function updateTotalBalance() {
   const aldoRetentionContent = document.getElementById('aldoRetentionValue');
   aldoRetentionContent.textContent = formatCurrency(aldoRetention);
 
-  const accountsTotal = Object.entries(accounts).reduce((sum, [_, account]) => {
+  // Get the diferencia semanal value 
+  const diferenciaSemanalElement = document.querySelector('.data-box:nth-child(2) .data-content p');
+  const diferenciaSemanalValue = diferenciaSemanalElement ? 
+    parseFloat(diferenciaSemanalElement.textContent.replace(/[^0-9-]/g, '')) : 0;
+
+  // Calculate activos total (including transbank value)
+  const activosTotal = Object.entries(accounts).reduce((sum, [_, account]) => {
     if (account.treatment === 'activos') {
       return sum + account.balance;
-    } else {
-      return sum + account.balance; 
     }
-  }, 0);
+    return sum;
+  }, 0) + transbankValue;
 
-  const total = accountsTotal + transbankValue;
+  // Calculate pasivos total (including diferencia semanal as negative)
+  const pasivosTotal = Object.entries(accounts).reduce((sum, [_, account]) => {
+    if (account.treatment === 'pasivos') {
+      return sum + account.balance;
+    }
+    return sum;
+  }, 0) - Math.abs(diferenciaSemanalValue); // Add diferencia semanal as negative
+
+  // Calculate total balance (activos - pasivos)
+  const total = activosTotal - Math.abs(pasivosTotal);
+  
+  // Update total display
   document.getElementById('totalAmount').textContent = formatCurrency(total);
 }
 
@@ -162,6 +186,16 @@ function updateAccountsList() {
     const div = createAccountElement(accountKey, accountData, pasivosList);
     pasivosTotal += accountData.balance;
   });
+
+  // Add DIFERENCIA SEMANAL FIGARO value to pasivosTotal as a negative value
+  const diferenciaSemanalElement = document.querySelector('.data-box:nth-child(2) .data-content p');
+  if (diferenciaSemanalElement) {
+    const diferenciaSemanalValue = parseFloat(diferenciaSemanalElement.textContent.replace(/[^0-9-]/g, ''));
+    if (!isNaN(diferenciaSemanalValue)) {
+      // Add as negative value since it represents a cost/expense
+      pasivosTotal += -Math.abs(diferenciaSemanalValue);
+    }
+  }
   
   document.getElementById('activosTotal').textContent = formatCurrency(activosTotal);
   document.getElementById('pasivosTotal').textContent = formatCurrency(pasivosTotal);
@@ -864,6 +898,7 @@ function saveToLocalStorage() {
   localStorage.setItem('finanzasTransactions', JSON.stringify(transactions));
   localStorage.setItem('finanzasAccountsOrder', JSON.stringify(accountsOrder));
   localStorage.setItem('finanzasTransactionsOrder', JSON.stringify(transactionsOrder));
+  localStorage.setItem('figaro_indicators', JSON.stringify(figaroIndicators));
 }
 
 function loadFromLocalStorage() {
@@ -871,11 +906,13 @@ function loadFromLocalStorage() {
   const savedTransactions = localStorage.getItem('finanzasTransactions');
   const savedAccountsOrder = localStorage.getItem('finanzasAccountsOrder');
   const savedTransactionsOrder = localStorage.getItem('finanzasTransactionsOrder');
+  const savedIndicators = localStorage.getItem('figaro_indicators');
   
   if (savedAccounts) accounts = JSON.parse(savedAccounts);
   if (savedTransactions) transactions = JSON.parse(savedTransactions);
   if (savedAccountsOrder) accountsOrder = JSON.parse(savedAccountsOrder);
   if (savedTransactionsOrder) transactionsOrder = JSON.parse(savedTransactionsOrder);
+  if (savedIndicators) figaroIndicators = JSON.parse(savedIndicators);
   
   updateTotalBalance();
   updateAccountsList();
@@ -891,6 +928,8 @@ function loadFromLocalStorage() {
   
   updateBalanceIndicators();
   setInterval(updateBalanceIndicators, 60000);
+  updateFigaroIndicatorsPanel(); // Call updateFigaroIndicatorsPanel first
+  updateTotalBalance();       // Then call updateTotalBalance to use the updated indicator value
 }
 
 function addTransaction(transaction) {
@@ -1103,10 +1142,10 @@ function handleTransactionDragOver(e) {
   e.preventDefault();
   const draggedElement = document.querySelector('.transaction-item.dragging');
   if (!draggedElement) return;
-  
+
   const transactionsList = document.getElementById('transactionsList');
   const siblings = [...transactionsList.querySelectorAll('.transaction-item:not(.dragging)')];
-  
+
   const nextSibling = siblings.find(sibling => {
     const box = sibling.getBoundingClientRect();
     const offset = e.clientY - box.top - box.height / 2;
@@ -1174,9 +1213,25 @@ async function updateBalanceIndicators() {
     document.getElementById('currentDate').textContent = dateStr;
     document.getElementById('currentTime').textContent = timeStr;
     document.getElementById('usdValue').textContent = usdValue;
+
+    // Get the ingresoFaltanteValue from the figaroIndicators panel
+    const ingresoFaltanteValueElement = document.getElementById('ingresoFaltanteValue');
+    const ingresoFaltanteValue = ingresoFaltanteValueElement ?
+      parseFloat(ingresoFaltanteValueElement.textContent.replace(/[^0-9-]/g, '')) : 0;
+
+    // Update the ingresoFaltanteValue in the summary panel
+    document.getElementById('ingresoFaltanteValueSummary').textContent = formatCurrency(ingresoFaltanteValue);
+
+    // Calculate and update pronostico
+    const balanceTotal = parseFloat(document.getElementById('totalAmount').textContent.replace(/[^0-9-]/g, ''));
+    const pronostico = balanceTotal + ingresoFaltanteValue;
+    document.getElementById('pronosticoValue').textContent = formatCurrency(pronostico);
+
   } catch (error) {
     console.error('Error al obtener el valor del dólar:', error);
     document.getElementById('usdValue').textContent = 'No disponible';
+    document.getElementById('ingresoFaltanteValueSummary').textContent = 'No disponible';
+    document.getElementById('pronosticoValue').textContent = 'No disponible';
   }
 }
 
@@ -1779,6 +1834,7 @@ function addSalonSale(sale) {
   updateSalonSalesDisplay();
   updateHairdresserPanels();
   updateFigaroSemanasPanel();
+  updateFigaroIndicatorsPanel();
 }
 
 function deleteSalonSale(saleId) {
@@ -1789,6 +1845,7 @@ function deleteSalonSale(saleId) {
   updateSalonSalesDisplay();
   updateHairdresserPanels();
   updateFigaroSemanasPanel();
+  updateFigaroIndicatorsPanel();
 }
 
 function updateSalonSalesDisplay() {
@@ -2249,7 +2306,8 @@ document.getElementById('backupSave').addEventListener('click', () => {
     salonSales,
     commissionRates,
     ivaRate,
-    salesBoletas
+    salesBoletas,
+    figaroIndicators
   };
 
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -2291,6 +2349,7 @@ document.getElementById('backupRestore').addEventListener('click', () => {
         if (data.commissionRates) commissionRates = data.commissionRates;
         if (data.ivaRate) ivaRate = data.ivaRate;
         if (data.salesBoletas) salesBoletas = data.salesBoletas;
+        if (data.figaroIndicators) figaroIndicators = data.figaroIndicators;
 
         updateTotalBalance();
         updateAccountsList();
@@ -2319,6 +2378,7 @@ function saveSalonToLocalStorage() {
   localStorage.setItem('figaro_iva_rate', JSON.stringify(ivaRate));
   localStorage.setItem('hairdresserCommissions', JSON.stringify(hairdresserCommissions));
   localStorage.setItem('sales_boletas', JSON.stringify(salesBoletas));
+  localStorage.setItem('figaro_indicators', JSON.stringify(figaroIndicators));
 }
 
 function loadSalonFromLocalStorage() {
@@ -2327,12 +2387,14 @@ function loadSalonFromLocalStorage() {
   const savedIvaRate = localStorage.getItem('figaro_iva_rate');
   const savedHairdresserCommissions = localStorage.getItem('hairdresserCommissions');
   const savedBoletas = localStorage.getItem('sales_boletas');
+  const savedIndicators = localStorage.getItem('figaro_indicators');
 
   if (savedSales) salonSales = JSON.parse(savedSales);
   if (savedRates) commissionRates = JSON.parse(savedRates);
   if (savedIvaRate) ivaRate = JSON.parse(savedIvaRate);
   if (savedHairdresserCommissions) hairdresserCommissions = JSON.parse(savedHairdresserCommissions);
   if (savedBoletas) salesBoletas = JSON.parse(savedBoletas);
+  if (savedIndicators) figaroIndicators = JSON.parse(savedIndicators);
 
   updateSalonSalesDisplay();
   updateHairdresserPanels();
@@ -3141,7 +3203,7 @@ function editCommissionValue(e) {
   input.focus();
   input.select();
 
-  function saveCommission() {
+  function saveEdit() {
     const newValue = parseFloat(input.value);
     if (!isNaN(newValue) && newValue >= 0 && newValue <= 100) {
       hairdresserCommissions[hairdresser][type] = newValue;
@@ -3175,11 +3237,11 @@ function editCommissionValue(e) {
     }
   }
 
-  input.addEventListener('blur', saveCommission);
+  input.addEventListener('blur', saveEdit);
   input.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      saveCommission();
+      saveEdit();
     }
   });
 }
@@ -3829,7 +3891,7 @@ function updateFigaroSemanasPanel() {
 
   // Create week panels
   Object.entries(weeksData)
-    .sort(([weekA], [weekB]) => parseInt(weekA) - parseInt(weekB))
+    .sort(([weekA], [weekB]) => parseInt(weekA) - parseInt(weekB)) 
     .forEach(([week, weekData]) => {
       const hasData = Object.values(weekData).some(hairdresser => 
         typeof hairdresser === 'object' && hairdresser.totalVentas > 0
@@ -4094,4 +4156,257 @@ function updateHairdresserPanels() {
   updateOtroBoletasPanel();
   updateFigaroTotalesFinales();
   updateFigaroResumenMensualPanel(); // Call the new function here
+}
+
+function updateFigaroIndicatorsPanel() {
+  const indicatorsContent = document.querySelector('.figaro-panel.indicadores .figaro-content');
+
+  // Calculate unique worked days from sales
+  const uniqueSalesDays = new Set(
+    salonSales.map(sale => new Date(sale.date).toISOString().split('T')[0])
+  );
+  const diasTrabajados = uniqueSalesDays.size;
+
+  // Calculate meta dia
+  const metaDia = figaroIndicators.diasHabilesMes && figaroIndicators.metaMes ?
+    figaroIndicators.metaMes / figaroIndicators.diasHabilesMes : 0;
+
+  // Calculate total porcentajes and promedio diario
+  const totalPorcentajes = salonSales.reduce((total, sale) => {
+    const hairdresser = sale.hairdresser.toLowerCase();
+    const recAmount = sale.amount * (hairdresserCommissions[hairdresser].rec / 100);
+    const comAmount = sale.amount * (hairdresserCommissions[hairdresser].com / 100);
+    return total + (recAmount + comAmount);
+  }, 0);
+
+  const promPorcDia = diasTrabajados > 0 ? totalPorcentajes / diasTrabajados : 0;
+
+  // Calculate proyeccion
+  const proyeccion = promPorcDia * (figaroIndicators.diasHabilesMes || 0);
+
+  // Calculate ingreso faltante (proyeccion - totalPorcentajes)
+  const ingresoFaltante = proyeccion - totalPorcentajes;
+
+  // Calculate diferencia semanal for selected week
+  const selectedWeek = figaroIndicators.selectedWeek || 1;
+
+  // Get all sales for the selected week
+  const weekSales = salonSales.filter(sale => parseInt(sale.week) === selectedWeek);
+
+  // Calculate the weekly difference (diferencia semanal)
+  let diferenciaSemanal = 0;
+
+  if (weekSales.length > 0) {
+    const marcosSales = weekSales.filter(sale => sale.hairdresser === 'MARCOS');
+    const otroSales = weekSales.filter(sale => sale.hairdresser === 'OTRO');
+
+    // Calculate Marcos' difference
+    const marcosDiferencia = marcosSales.reduce((sum, sale) => {
+      if (sale.paymentType === 'debito' || sale.paymentType === 'credito') {
+        const recAmount = sale.amount * (hairdresserCommissions.marcos.rec / 100);
+        const comAmount = sale.amount * (hairdresserCommissions.marcos.com / 100);
+        return sum + (sale.amount - (recAmount + comAmount));
+      }
+      return sum;
+    }, 0);
+
+    // Calculate Otro's difference
+    const otroDiferencia = otroSales.reduce((sum, sale) => {
+      if (sale.paymentType === 'debito' || sale.paymentType === 'credito') {
+        const recAmount = sale.amount * (hairdresserCommissions.otro.rec / 100);
+        const comAmount = sale.amount * (hairdresserCommissions.otro.com / 100);
+        return sum + (sale.amount - (recAmount + comAmount));
+      }
+      return sum;
+    }, 0);
+
+    diferenciaSemanal = marcosDiferencia + otroDiferencia;
+  }
+
+  indicatorsContent.innerHTML = `
+    <div class="indicator-item">
+      <span class="indicator-label">PROYECCION:</span>
+      <span class="indicator-value" id="proyeccionValue">
+        ${formatCurrency(proyeccion)}
+      </span>
+    </div>
+    <div class="indicator-item">
+      <span class="indicator-label">INGRESO FALTANTE:</span>
+      <span class="indicator-value" id="ingresoFaltanteValue">
+        ${formatCurrency(ingresoFaltante)}
+      </span>
+    </div>
+    <div class="indicator-item">
+      <span class="indicator-label">SEMANAS:</span>
+      <span class="indicator-value has-select">
+        <select id="weekSelector">
+          ${[1, 2, 3, 4, 5].map(week => `
+            <option value="${week}" ${figaroIndicators.selectedWeek === week ? 'selected' : ''}>
+              Semana ${week}
+            </option>
+          `).join('')}
+        </select>
+      </span>
+    </div>
+    <div class="indicator-item">
+      <span class="indicator-label">DIFERENCIA SEMANAL:</span>
+      <span class="indicator-value" id="diferenciaSemanalValue">
+        ${formatCurrency(diferenciaSemanal)}
+      </span>
+    </div>
+    <div class="indicator-item">
+      <span class="indicator-label">META MES:</span>
+      <span class="indicator-value editable" id="metaMesValue">
+        ${formatCurrency(figaroIndicators.metaMes) || 'Click para editar'}
+      </span>
+    </div>
+    <div class="indicator-item">
+      <span class="indicator-label">META DIA:</span>
+      <span class="indicator-value" id="metaDiaValue">
+        ${formatCurrency(metaDia)}
+      </span>
+    </div>
+    <div class="indicator-item">
+      <span class="indicator-label">DIAS HABILES MES:</span>
+      <span class="indicator-value editable" id="diasHabilesMesValue">
+        ${figaroIndicators.diasHabilesMes || 'Click para editar'}
+      </span>
+    </div>
+    <div class="indicator-item">
+      <span class="indicator-label">DIAS TRABAJADOS:</span>
+      <span class="indicator-value" id="diasTrabajadosValue">
+        ${diasTrabajados}
+      </span>
+    </div>
+    <div class="indicator-item">
+      <span class="indicator-label">DIAS RESTANTES:</span>
+      <span class="indicator-value" id="diasRestantesValue">
+        ${figaroIndicators.diasHabilesMes - diasTrabajados}
+      </span>
+    </div>
+  `;
+
+  // Update DIF. SEMANAL FIGARO value in external data panel
+  const difSemanalFigaroValueElement = document.querySelector('.data-box:nth-child(2) .data-content p');
+  difSemanalFigaroValueElement.textContent = formatCurrency(diferenciaSemanal);
+
+  // ... rest of existing code to add event listeners ...
+  // Add event listeners for week selection and editable values
+  const weekSelector = document.getElementById('weekSelector');
+  weekSelector.addEventListener('change', (e) => {
+    figaroIndicators.selectedWeek = parseInt(e.target.value);
+    saveToLocalStorage();
+    updateFigaroIndicatorsPanel();
+  });
+
+  // Add event listeners for editable values (diasHabilesMes and metaMes)
+  const diasHabilesMesValue = document.getElementById('diasHabilesMesValue');
+  const metaMesValue = document.getElementById('metaMesValue');
+
+  diasHabilesMesValue.addEventListener('dblclick', () => {
+    makeIndicatorEditable(diasHabilesMesValue, 'diasHabilesMes', 'number');
+  });
+
+  metaMesValue.addEventListener('dblclick', () => {
+    makeIndicatorEditable(metaMesValue, 'metaMes', 'money');
+  });
+
+  updateTotalBalance(); // Add this line to update total balance
+  updateAccountsList(); // Add this line to update accounts list
+}
+
+function makeIndicatorEditable(element, fieldName, type) {
+  const currentValue = type === 'money' ? 
+    (figaroIndicators[fieldName] || 0) : 
+    (figaroIndicators[fieldName] || 'Click para editar');
+
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.min = type === 'number' ? '1' : '0';
+  input.max = type === 'number' ? '31' : '';
+  input.step = type === 'money' ? '1000' : '1';
+  input.value = currentValue;
+  input.className = 'edit-indicator-value';
+  
+  element.replaceWith(input);
+  input.focus();
+  input.select();
+
+  function saveEdit() {
+    const newValue = type === 'money' ? 
+      parseFloat(input.value) : 
+      parseInt(input.value);
+
+    if (!isNaN(newValue) && newValue >= 0 && (type !== 'number' || newValue <= 31)) {
+      figaroIndicators[fieldName] = newValue;
+      saveToLocalStorage();
+    }
+    
+    const span = document.createElement('span');
+    span.className = 'indicator-value editable';
+    span.id = element.id;
+    span.textContent = type === 'money' ? 
+      formatCurrency(figaroIndicators[fieldName] || 0) : 
+      (figaroIndicators[fieldName] || 'Click para editar');
+    
+    input.replaceWith(span);
+    
+    span.addEventListener('dblclick', (e) => {
+      makeIndicatorEditable(e.target, fieldName, type);
+    });
+
+    updateFigaroIndicatorsPanel();
+  }
+
+  input.addEventListener('blur', saveEdit);
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveEdit();
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadFromLocalStorage();
+  updateFigaroIndicatorsPanel();
+});
+
+function saveToLocalStorage() {
+  localStorage.setItem('finanzasAccounts', JSON.stringify(accounts));
+  localStorage.setItem('finanzasTransactions', JSON.stringify(transactions));
+  localStorage.setItem('finanzasAccountsOrder', JSON.stringify(accountsOrder));
+  localStorage.setItem('finanzasTransactionsOrder', JSON.stringify(transactionsOrder));
+  localStorage.setItem('figaro_indicators', JSON.stringify(figaroIndicators));
+}
+
+function loadFromLocalStorage() {
+  const savedAccounts = localStorage.getItem('finanzasAccounts');
+  const savedTransactions = localStorage.getItem('finanzasTransactions');
+  const savedAccountsOrder = localStorage.getItem('finanzasAccountsOrder');
+  const savedTransactionsOrder = localStorage.getItem('finanzasTransactionsOrder');
+  const savedIndicators = localStorage.getItem('figaro_indicators');
+  
+  if (savedAccounts) accounts = JSON.parse(savedAccounts);
+  if (savedTransactions) transactions = JSON.parse(savedTransactions);
+  if (savedAccountsOrder) accountsOrder = JSON.parse(savedAccountsOrder);
+  if (savedTransactionsOrder) transactionsOrder = JSON.parse(savedTransactionsOrder);
+  if (savedIndicators) figaroIndicators = JSON.parse(savedIndicators);
+  
+  updateTotalBalance();
+  updateAccountsList();
+  updateTransactionsList();
+  updateAccountSelectors();
+  
+  updateBalanceIndicators();
+  setInterval(updateBalanceIndicators, 60000);
+  
+  const today = new Date();
+  today.setMinutes(today.getMinutes() + today.getTimezoneOffset());
+  document.getElementById('date').valueAsDate = today;
+  
+  updateBalanceIndicators();
+  setInterval(updateBalanceIndicators, 60000);
+  updateFigaroIndicatorsPanel(); // Call updateFigaroIndicatorsPanel first
+  updateTotalBalance();       // Then call updateTotalBalance to use the updated indicator value
 }
