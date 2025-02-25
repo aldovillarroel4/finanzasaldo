@@ -2402,9 +2402,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .ventas-table-header,
 .ventas-table-row {
   display: grid;
-  grid-template-columns: 0.8fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-  gap: 10px;
-  padding: 8px 10px;
+  grid-template-columns: 0.8fr 1.2fr 1.3fr 1.3fr 1.3fr 1fr 1fr 1.3fr; /* Adjusted ratios for better spacing */
+  gap: 15px;
+  padding: 8px 15px;
   align-items: center;
   width: 100%;
 }
@@ -2416,7 +2416,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .ventas-marcos .ventas-table-row,
 .ventas-otro .ventas-table-header,
 .ventas-otro .ventas-table-row {
-  grid-template-columns: 0.8fr 1fr 1fr 1.2fr 1fr 1fr 1fr 1fr 1fr; /* Adjusted ratios for better spacing */
+  grid-template-columns: 0.8fr 1.2fr 1.3fr 1.3fr 1.3fr 1fr 1fr 1.3fr; /* Adjusted ratios for better spacing */
 }
 
 .ventas-table-cell {
@@ -3594,4 +3594,21 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .otro-panel.boletas-otro .otro-content::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+.proy-tcr-btn {
+  margin-top: 8px;
+  background-color: #f1c40f; /* Yellow color */
+  color: #000; /* Black text */
+  font-weight: bold;
+  padding: 8px;
+  width: 100%;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.proy-tcr-btn:hover {
+  background-color: #f39c12; /* Slightly darker yellow on hover */
 }
