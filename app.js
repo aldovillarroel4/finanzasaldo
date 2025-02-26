@@ -1161,6 +1161,33 @@ function handleTransactionDragOver(e) {
 
 function handleTransactionDrop(e) {
   e.preventDefault();
+  const draggedId = parseInt(e.dataTransfer.getData('text/plain'));
+  const items = document.querySelectorAll('.transaction-item');
+  const newOrder = Array.from(items).map(item => 
+    parseInt(item.getAttribute('data-transaction-id'))
+  );
+  
+  // Update transactions order
+  transactionsOrder = newOrder;
+  
+  // Get current selected account
+  const currentAccount = selectedAccount;
+  
+  // Check if this is a TCR account and transaction is locked
+  if (currentAccount && 
+      currentAccount.toLowerCase().startsWith('tcr') && 
+      accounts[currentAccount].treatment === 'pasivos') {
+    
+    const transaction = transactions.find(t => t.id === draggedId);
+    if (transaction && transaction.locked) {
+      // Re-render TCR projection to reflect new order
+      if (document.getElementById('tcrProjectionModal').style.display === 'block') {
+        showTCRProjection();
+      }
+    }
+  }
+  
+  saveToLocalStorage();
 }
 
 function updateTransactionsOrder() {
@@ -4454,14 +4481,20 @@ function showTCRProjection() {
   monthsHeader.innerHTML = '';
   content.innerHTML = '';
 
-  // Get locked TCR transactions
-  const tcrTransactions = transactions.filter(t => {
-    const account = accounts[t.account];
-    return t.locked && 
-           account && 
-           account.treatment === 'pasivos' && 
-           t.account.toLowerCase().startsWith('tcr');
-  });
+  // Get locked TCR transactions respecting the order
+  const tcrTransactions = transactions
+    .sort((a, b) => {
+      const indexA = transactionsOrder.indexOf(a.id);
+      const indexB = transactionsOrder.indexOf(b.id);
+      return indexA - indexB;
+    })
+    .filter(t => {
+      const account = accounts[t.account];
+      return t.locked && 
+             account && 
+             account.treatment === 'pasivos' && 
+             t.account.toLowerCase().startsWith('tcr');
+    });
 
   // Group transactions by account
   const accountGroups = {};
