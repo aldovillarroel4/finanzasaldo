@@ -4444,3 +4444,123 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ...rest of the event listeners and initializations
 });
+
+function showTCRProjection() {
+  const modal = document.getElementById('tcrProjectionModal');
+  const monthsHeader = modal.querySelector('.tcr-months-header');
+  const content = modal.querySelector('.tcr-content');
+  
+  // Clear previous content
+  monthsHeader.innerHTML = '';
+  content.innerHTML = '';
+
+  // Get locked TCR transactions
+  const tcrTransactions = transactions.filter(t => {
+    const account = accounts[t.account];
+    return t.locked && 
+           account && 
+           account.treatment === 'pasivos' && 
+           t.account.toLowerCase().startsWith('tcr');
+  });
+
+  // Group transactions by account
+  const accountGroups = {};
+  tcrTransactions.forEach(t => {
+    if (!accountGroups[t.account]) {
+      accountGroups[t.account] = [];
+    }
+    accountGroups[t.account].push(t);
+  });
+
+  // Create month headers and calculate monthly totals
+  const monthlyTotals = new Array(12).fill(0);
+  
+  // Add month headers
+  for (let i = 0; i < 12; i++) {
+    const monthCell = document.createElement('div');
+    monthCell.className = 'tcr-month-cell';
+    monthCell.innerHTML = `
+      Mes ${i + 1}
+      <span class="tcr-month-total">${formatCurrency(0)}</span>
+    `;
+    monthsHeader.appendChild(monthCell);
+  }
+
+  // Create content for each account
+  Object.entries(accountGroups).forEach(([account, transactions]) => {
+    const accountGroup = document.createElement('div');
+    accountGroup.className = 'tcr-account-group';
+    
+    const accountHeader = document.createElement('div');
+    accountHeader.className = 'tcr-account-header';
+    accountHeader.textContent = accounts[account].displayName;
+    accountGroup.appendChild(accountHeader);
+
+    transactions.forEach(t => {
+      const row = document.createElement('div');
+      row.className = 'tcr-transaction-row';
+      
+      // Add description cell
+      const descCell = document.createElement('div');
+      descCell.className = 'tcr-transaction-cell';
+      descCell.textContent = t.description;
+      row.appendChild(descCell);
+
+      // Calculate monthly payments
+      const amount = t.type === 'gasto' ? t.amount : -t.amount;
+      
+      // Changed logic here - if no totalInstallments defined or equals 1, repeat for all months
+      const isFixedPayment = !t.totalInstallments || t.totalInstallments === 1;
+      const remainingInstallments = !isFixedPayment ? 
+        (t.totalInstallments - t.currentInstallment + 1) : 
+        12; // Fixed payments show for all 12 months
+      
+      for (let i = 0; i < 12; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'tcr-amount-cell';
+        
+        if (isFixedPayment) {
+          // Fixed monthly payment - show for all months
+          cell.textContent = formatCurrency(amount);
+          monthlyTotals[i] += amount;
+        } else {
+          // Installment payment - only show for remaining months
+          if (i < remainingInstallments) {
+            cell.textContent = formatCurrency(amount);
+            monthlyTotals[i] += amount;
+          } else {
+            cell.className += ' tcr-empty-cell';
+            cell.textContent = '-';
+          }
+        }
+        
+        row.appendChild(cell);
+      }
+
+      accountGroup.appendChild(row);
+    });
+
+    content.appendChild(accountGroup);
+  });
+
+  // Update month totals
+  const monthCells = monthsHeader.querySelectorAll('.tcr-month-cell');
+  monthCells.forEach((cell, i) => {
+    cell.querySelector('.tcr-month-total').textContent = formatCurrency(monthlyTotals[i]);
+  });
+
+  modal.style.display = 'block';
+
+  // Add close button handler
+  const closeBtn = modal.querySelector('.tcr-close');
+  closeBtn.onclick = () => modal.style.display = 'none';
+
+  // Close when clicking outside
+  window.onclick = (e) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+    }
+  };
+}
+
+document.getElementById('proyTCR').onclick = showTCRProjection;
