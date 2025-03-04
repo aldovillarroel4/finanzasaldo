@@ -1627,186 +1627,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  loadFromLocalStorage();
-
-  const modal = document.getElementById('accountModal');
-  const addAccountBtn = document.querySelector('.add-account-btn');
-  const deleteAccountBtn = document.querySelector('.delete-account-btn');
-  const closeBtn = document.querySelector('.close');
-
-  addAccountBtn.onclick = () => openModal(false);
-
-  deleteAccountBtn.onclick = () => {
-    if (!selectedAccount) return;
-  
-    if (confirm(`¿Está seguro que desea eliminar la cuenta "${selectedAccount}"?`)) {
-      transactions = transactions.filter(t => t.account !== selectedAccount);
-      
-      delete accounts[selectedAccount];
-      selectedAccount = null;
-      
-      updateAccountsList();
-      updateAccountButtons();
-      updateAccountSelectors(); 
-      updateTransactionsList(); 
-      saveToLocalStorage();
-    }
-  };
-
-  document.getElementById('account').addEventListener('change', (e) => {
-    toggleInstallmentFields();
-    toggleUSDAmountField();
-  });
-
-  function toggleInstallmentFields() {
-    const accountSelect = document.getElementById('account');
-    const installmentFields = document.querySelector('.installment-fields');
-    const selectedAccountKey = accountSelect.value;
-    
-    if (selectedAccountKey && accounts[selectedAccountKey].type === 'credito') {
-      installmentFields.style.display = 'block';
-      document.getElementById('currentInstallment').disabled = false;
-      document.getElementById('totalInstallments').disabled = false;
-      document.getElementById('currentInstallment').required = true;
-      document.getElementById('totalInstallments').required = true;
-    } else {
-      installmentFields.style.display = 'none';
-      document.getElementById('currentInstallment').disabled = true;
-      document.getElementById('totalInstallments').disabled = true;
-      document.getElementById('currentInstallment').required = false;
-      document.getElementById('totalInstallments').required = false;
-    }
-  }
-
-  function toggleUSDAmountField() {
-    const accountSelect = document.getElementById('account');
-    const usdAmountField = document.querySelector('.usd-amount-field');
-    const selectedAccountKey = accountSelect.value;
-    
-    if (selectedAccountKey && accounts[selectedAccountKey].type === 'dolar') {
-      usdAmountField.style.display = 'block';
-      document.getElementById('usdAmount').addEventListener('input', updateCLPAmount);
-    } else {
-      usdAmountField.style.display = 'none';
-      document.getElementById('usdAmount').removeEventListener('input', updateCLPAmount);
-    }
-  }
-
-  async function updateCLPAmount(e) {
-    try {
-      const response = await fetch('https://mindicador.cl/api/dolar');
-      const data = await response.json();
-      const usdRate = data.serie[0].valor;
-      const usdAmount = parseFloat(e.target.value) || 0;
-      const clpAmount = usdAmount * usdRate;
-      document.getElementById('amount').value = clpAmount.toFixed(2);
-    } catch (error) {
-      console.error('Error al convertir USD a CLP:', error);
-    }
-  }
-
-  document.getElementById('transactionForm').addEventListener('submit', async (e) => {
-    const accountSelect = document.getElementById('account');
-    const selectedAccountKey = accountSelect.value;
-    
-    if (accounts[selectedAccountKey]?.type === 'dolar') {
-      e.preventDefault();
-      const usdAmount = parseFloat(document.getElementById('usdAmount').value) || 0;
-      try {
-        const response = await fetch('https://mindicador.cl/api/dolar');
-        const data = await response.json();
-        const usdRate = data.serie[0].valor;
-        const clpAmount = usdAmount * usdRate;
-        document.getElementById('amount').value = clpAmount.toFixed(2);
-        document.getElementById('transactionForm').requestSubmit();
-      } catch (error) {
-        console.error('Error al obtener el tipo de cambio. Por favor intente nuevamente.');
-        alert('Error al obtener el tipo de cambio. Por favor intente nuevamente.');
-      }
-    }
-  });
-
-  document.querySelectorAll('.type-button').forEach(button => {
-    button.addEventListener('click', (e) => {
-      e.preventDefault();
-      document.querySelectorAll('.type-button').forEach(btn => {
-        btn.classList.remove('selected');
-      });
-      button.classList.add('selected');
-      const type = button.dataset.type;
-      document.getElementById('type').value = type;
-      
-      const destinationAccountGroup = document.getElementById('destinationAccountGroup');
-      const destinationAccountSelect = document.getElementById('destinationAccount');
-      if (type === 'transferencia') {
-        destinationAccountGroup.style.display = 'block';
-        destinationAccountSelect.disabled = false;
-        destinationAccountSelect.required = true;
-        setTimeout(() => {
-          destinationAccountGroup.classList.add('show');
-        }, 10);
-      } else {
-        destinationAccountGroup.classList.remove('show');
-        setTimeout(() => {
-          destinationAccountGroup.style.display = 'none';
-          destinationAccountSelect.disabled = true;
-          destinationAccountSelect.required = false;
-          destinationAccountSelect.value = '';
-        }, 300);
-      }
-    });
-  });
-
-  document.getElementById('amount').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const amount = parseFloat(e.target.value);
-      if (!amount || isNaN(amount)) {
-        return; // Don't submit if amount is invalid
-      }
-      document.getElementById('transactionForm').requestSubmit();
-    }
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Delete' && selectedTransactionId !== null) {
-      const transaction = transactions.find(t => t.id === selectedTransactionId);
-      if (transaction && confirm('¿Está seguro que desea eliminar esta transacción?')) {
-        deleteTransaction(selectedTransactionId);
-      }
-    }
-  });
-
-  const hideButton = document.getElementById('hideButton');
-  const transactionsContainer = document.querySelector('.transactions-container');
-
-  hideButton.addEventListener('click', () => {
-    isPanelsHidden = !isPanelsHidden;
-    
-    if (isPanelsHidden) {
-      transactionsContainer.classList.add('hidden');
-      hideButton.textContent = 'Mostrar';
-      hideButton.classList.add('showing');
-    } else {
-      transactionsContainer.classList.remove('hidden');
-      hideButton.textContent = 'Ocultar';
-      hideButton.classList.remove('showing');
-    }
-  });
-
-  const hairdresserButtons = document.querySelectorAll('.hairdresser-button');
-
-  hairdresserButtons.forEach(button => {
-    button.addEventListener('click', (e) => {
-      e.preventDefault();
-      hairdresserButtons.forEach(btn => btn.classList.remove('selected'));
-      button.classList.add('selected');
-      document.getElementById('hairdresser').value = button.dataset.hairdresser;
-    });
-  });
-});
-
-document.addEventListener('DOMContentLoaded', () => {
   const cardFilterBtn = document.getElementById('cardFilter');
   cardFilterBtn.addEventListener('click', () => {
     isCardFilterActive = !isCardFilterActive;
@@ -1848,12 +1668,24 @@ function addSalonSale(sale) {
     netAmount: parseFloat(sale.amount) // Ensure netAmount is a number
   };
 
-  if (sale.paymentType === 'debito' || sale.paymentType === 'credito') {
+  // Calculate commissions
+  const isCardPayment = sale.paymentType === 'debito' || sale.paymentType === 'credito';
+  const hairdresserConfig = hairdresserCommissions[sale.hairdresser.toLowerCase()];
+
+  // Only calculate REC for card payments
+  const recAmount = isCardPayment ? 
+    sale.amount * (hairdresserConfig.rec / 100) : 0;
+    
+  // Always calculate COM
+  const comAmount = sale.amount * (hairdresserConfig.com / 100);
+  
+  newSale.commission = recAmount + comAmount;
+
+  if (isCardPayment) {
     const commissionRate = sale.paymentType === 'debito' ? 
       commissionRates.debito / 100 : 
       commissionRates.credito / 100;
     
-    newSale.commission = newSale.amount * commissionRate;
     newSale.commissionWithIVA = newSale.commission * (1 + ivaRate / 100);
     newSale.netAmount = newSale.amount - newSale.commissionWithIVA;
   }
@@ -1868,15 +1700,41 @@ function addSalonSale(sale) {
   updateFigaroIndicatorsPanel();
 }
 
-function deleteSalonSale(saleId) {
-  salonSales = salonSales.filter(sale => sale.id !== saleId);
-  saveSalonToLocalStorage();
+// Update the Aldo/Marcos/Otro sales panels to show correct REC calculations
+function updateHairdresserVentasPanel(hairdresser, panel) {
+  const ventasPanel = panel.querySelector('.ventas-table');
   
-  // Update all relevant panels
-  updateSalonSalesDisplay();
-  updateHairdresserPanels();
-  updateFigaroSemanasPanel();
-  updateFigaroIndicatorsPanel();
+  const sales = salonSales
+    .filter(sale => sale.hairdresser === hairdresser.toUpperCase())
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  sales.forEach(sale => {
+    const isCardPayment = sale.paymentType === 'debito' || sale.paymentType === 'credito';
+    const hairdresserConfig = hairdresserCommissions[hairdresser.toLowerCase()];
+    
+    // Only calculate REC for card payments
+    const recAmount = isCardPayment ? 
+      sale.amount * (hairdresserConfig.rec / 100) : 0;
+      
+    // Always calculate COM  
+    const comAmount = sale.amount * (hairdresserConfig.com / 100);
+    const totalPercentage = recAmount + comAmount;
+    
+    const row = document.createElement('div');
+    row.className = 'ventas-table-row';
+    row.innerHTML = `
+      <div class="ventas-table-cell">Sem ${sale.week}</div>
+      <div class="ventas-table-cell">${formatDate(sale.date)}</div>
+      <div class="ventas-table-cell">${sale.serviceCode}</div>
+      <div class="ventas-table-cell amount">${formatCurrency(sale.amount)}</div>
+      <div class="ventas-table-cell payment-type ${sale.paymentType}">${sale.paymentType}</div>
+      <div class="ventas-table-cell amount">${isCardPayment ? formatCurrency(recAmount) : '-'}</div>
+      <div class="ventas-table-cell amount">${formatCurrency(comAmount)}</div>
+      <div class="ventas-table-cell amount">${formatCurrency(totalPercentage)}</div>
+    `;
+    
+    ventasPanel.appendChild(row);
+  });
 }
 
 function updateSalonSalesDisplay() {
@@ -2946,8 +2804,10 @@ function updateAldoSemanasPanel() {
       weekData.totalTarjeta += sale.amount;
     }
 
-    const recAmount = sale.amount * (hairdresserCommissions.aldo.rec / 100);
-    const comAmount = sale.amount * (hairdresserCommissions.aldo.com / 100);
+    const hairdresserConfig = hairdresserCommissions.aldo;
+    const recAmount = (sale.paymentType === 'debito' || sale.paymentType === 'credito') ?
+      sale.amount * (hairdresserConfig.rec / 100) : 0;
+    const comAmount = sale.amount * (hairdresserConfig.com / 100);
     weekData.totalPorc += (recAmount + comAmount);
   });
 
@@ -3016,8 +2876,10 @@ function updateMarcosSemanasPanel() {
       weekData.totalTarjeta += sale.amount;
     }
 
-    const recAmount = sale.amount * (hairdresserCommissions.marcos.rec / 100);
-    const comAmount = sale.amount * (hairdresserCommissions.marcos.com / 100);
+    const hairdresserConfig = hairdresserCommissions.marcos;
+    const recAmount = (sale.paymentType === 'debito' || sale.paymentType === 'credito') ?
+      sale.amount * (hairdresserConfig.rec / 100) : 0;
+    const comAmount = sale.amount * (hairdresserConfig.com / 100);
     weekData.totalPorc += (recAmount + comAmount);
   });
 
@@ -3086,8 +2948,14 @@ function updateAldoVentasPanel() {
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
   aldoSales.forEach(sale => {
-    const recAmount = sale.amount * (hairdresserCommissions.aldo.rec / 100);
-    const comAmount = sale.amount * (hairdresserCommissions.aldo.com / 100);
+    const isCardPayment = sale.paymentType === 'debito' || sale.paymentType === 'credito';
+    const hairdresserConfig = hairdresserCommissions.aldo;
+    // Only calculate REC for card payments
+    const recAmount = isCardPayment ? 
+      sale.amount * (hairdresserConfig.rec / 100) : 0;
+      
+    // Always calculate COM  
+    const comAmount = sale.amount * (hairdresserConfig.com / 100);
     const totalPercentage = recAmount + comAmount;
     
     const row = document.createElement('div');
@@ -3098,10 +2966,11 @@ function updateAldoVentasPanel() {
       <div class="ventas-table-cell">${sale.serviceCode}</div>
       <div class="ventas-table-cell amount">${formatCurrency(sale.amount)}</div>
       <div class="ventas-table-cell payment-type ${sale.paymentType}">${sale.paymentType}</div>
-      <div class="ventas-table-cell amount">${formatCurrency(recAmount)}</div>
+      <div class="ventas-table-cell amount">${isCardPayment ? formatCurrency(recAmount) : '-'}</div>
       <div class="ventas-table-cell amount">${formatCurrency(comAmount)}</div>
       <div class="ventas-table-cell amount">${formatCurrency(totalPercentage)}</div>
     `;
+    
     table.appendChild(row);
   });
 
@@ -3135,8 +3004,14 @@ function updateMarcosVentasPanel() {
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
   marcosSales.forEach(sale => {
-    const recAmount = sale.amount * (hairdresserCommissions.marcos.rec / 100);
-    const comAmount = sale.amount * (hairdresserCommissions.marcos.com / 100);
+    const isCardPayment = sale.paymentType === 'debito' || sale.paymentType === 'credito';
+    const hairdresserConfig = hairdresserCommissions.marcos;
+    // Only calculate REC for card payments
+    const recAmount = isCardPayment ? 
+      sale.amount * (hairdresserConfig.rec / 100) : 0;
+      
+    // Always calculate COM  
+    const comAmount = sale.amount * (hairdresserConfig.com / 100);
     const totalPercentage = recAmount + comAmount;
     
     const row = document.createElement('div');
@@ -3147,10 +3022,11 @@ function updateMarcosVentasPanel() {
       <div class="ventas-table-cell">${sale.serviceCode}</div>
       <div class="ventas-table-cell amount">${formatCurrency(sale.amount)}</div>
       <div class="ventas-table-cell payment-type ${sale.paymentType}">${sale.paymentType}</div>
-      <div class="ventas-table-cell amount">${formatCurrency(recAmount)}</div>
+      <div class="ventas-table-cell amount">${isCardPayment ? formatCurrency(recAmount) : '-'}</div>
       <div class="ventas-table-cell amount">${formatCurrency(comAmount)}</div>
       <div class="ventas-table-cell amount">${formatCurrency(totalPercentage)}</div>
     `;
+    
     table.appendChild(row);
   });
 
@@ -3183,8 +3059,14 @@ function updateOtroVentasPanel() {
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
   otroSales.forEach(sale => {
-    const recAmount = sale.amount * (hairdresserCommissions.otro.rec / 100);
-    const comAmount = sale.amount * (hairdresserCommissions.otro.com / 100);
+    const isCardPayment = sale.paymentType === 'debito' || sale.paymentType === 'credito';
+    const hairdresserConfig = hairdresserCommissions.otro;
+    // Only calculate REC for card payments
+    const recAmount = isCardPayment ? 
+      sale.amount * (hairdresserConfig.rec / 100) : 0;
+      
+    // Always calculate COM  
+    const comAmount = sale.amount * (hairdresserConfig.com / 100);
     const totalPercentage = recAmount + comAmount;
     
     const row = document.createElement('div');
@@ -3195,10 +3077,11 @@ function updateOtroVentasPanel() {
       <div class="ventas-table-cell">${sale.serviceCode}</div>
       <div class="ventas-table-cell amount">${formatCurrency(sale.amount)}</div>
       <div class="ventas-table-cell payment-type ${sale.paymentType}">${sale.paymentType}</div>
-      <div class="ventas-table-cell amount">${formatCurrency(recAmount)}</div>
+      <div class="ventas-table-cell amount">${isCardPayment ? formatCurrency(recAmount) : '-'}</div>
       <div class="ventas-table-cell amount">${formatCurrency(comAmount)}</div>
       <div class="ventas-table-cell amount">${formatCurrency(totalPercentage)}</div>
     `;
+    
     table.appendChild(row);
   });
 
@@ -3338,8 +3221,10 @@ function updateOtroSemanasPanel() {
       weekData.totalTarjeta += sale.amount;
     }
 
-    const recAmount = sale.amount * (hairdresserCommissions.otro.rec / 100);
-    const comAmount = sale.amount * (hairdresserCommissions.otro.com / 100);
+    const hairdresserConfig = hairdresserCommissions.otro;
+    const recAmount = (sale.paymentType === 'debito' || sale.paymentType === 'credito') ?
+      sale.amount * (hairdresserConfig.rec / 100) : 0;
+    const comAmount = sale.amount * (hairdresserConfig.com / 100);
     weekData.totalPorc += (recAmount + comAmount);
   });
 
@@ -3403,8 +3288,10 @@ function updateAldoTotalesPanel() {
       totals.totalTarjeta += sale.amount;
     }
 
-    const recAmount = sale.amount * (hairdresserCommissions.aldo.rec / 100);
-    const comAmount = sale.amount * (hairdresserCommissions.aldo.com / 100);
+    const hairdresserConfig = hairdresserCommissions.aldo;
+    const recAmount = (sale.paymentType === 'debito' || sale.paymentType === 'credito') ?
+      sale.amount * (hairdresserConfig.rec / 100) : 0;
+    const comAmount = sale.amount * (hairdresserConfig.com / 100);
     totals.totalPorc += (recAmount + comAmount);
   });
 
@@ -3455,8 +3342,10 @@ function updateMarcosTotalesPanel() {
       totals.totalTarjeta += sale.amount;
     }
 
-    const recAmount = sale.amount * (hairdresserCommissions.marcos.rec / 100);
-    const comAmount = sale.amount * (hairdresserCommissions.marcos.com / 100);
+    const hairdresserConfig = hairdresserCommissions.marcos;
+    const recAmount = (sale.paymentType === 'debito' || sale.paymentType === 'credito') ?
+      sale.amount * (hairdresserConfig.rec / 100) : 0;
+    const comAmount = sale.amount * (hairdresserConfig.com / 100);
     totals.totalPorc += (recAmount + comAmount);
   });
 
@@ -3507,8 +3396,10 @@ function updateOtroTotalesPanel() {
       totals.totalTarjeta += sale.amount;
     }
 
-    const recAmount = sale.amount * (hairdresserCommissions.otro.rec / 100);
-    const comAmount = sale.amount * (hairdresserCommissions.otro.com / 100);
+    const hairdresserConfig = hairdresserCommissions.otro;
+    const recAmount = (sale.paymentType === 'debito' || sale.paymentType === 'credito') ?
+      sale.amount * (hairdresserConfig.rec / 100) : 0;
+    const comAmount = sale.amount * (hairdresserConfig.com / 100);
     totals.totalPorc += (recAmount + comAmount);
   });
 
@@ -3899,7 +3790,8 @@ function updateFigaroSemanasPanel() {
     }
 
     const hairdresserConfig = hairdresserCommissions[sale.hairdresser.toLowerCase()];
-    const recAmount = sale.amount * (hairdresserConfig.rec / 100);
+    const recAmount = (sale.paymentType === 'debito' || sale.paymentType === 'credito') ?
+      sale.amount * (hairdresserConfig.rec / 100) : 0;
     const comAmount = sale.amount * (hairdresserConfig.com / 100);
     weekData.totalPorc += (recAmount + comAmount);
     
@@ -4002,12 +3894,11 @@ function updateFigaroTotalesFinales() {
         .filter(sale => sale.paymentType === 'debito' || sale.paymentType === 'credito')
         .reduce((sum, sale) => sum + sale.amount, 0),
       porc: aldoSales.reduce((sum, sale) => {
-        const recAmount = sale.amount * (hairdresserCommissions.aldo.rec / 100);
+        const recAmount = (sale.paymentType === 'debito' || sale.paymentType === 'credito') ?
+          sale.amount * (hairdresserCommissions.aldo.rec / 100) : 0;
         const comAmount = sale.amount * (hairdresserCommissions.aldo.com / 100);
         return sum + (recAmount + comAmount);
-      }, 0),
-      retencion: aldoSales.reduce((sum, sale) =>
-        sum + (sale.amount * (hairdresserCommissions.aldo.ret / 100)), 0)
+      }, 0)
     },
     MARCOS: {
       ventas: marcosSales.reduce((sum, sale) => sum + sale.amount, 0),
@@ -4015,12 +3906,11 @@ function updateFigaroTotalesFinales() {
         .filter(sale => sale.paymentType === 'debito' || sale.paymentType === 'credito')
         .reduce((sum, sale) => sum + sale.amount, 0),
       porc: marcosSales.reduce((sum, sale) => {
-        const recAmount = sale.amount * (hairdresserCommissions.marcos.rec / 100);
+        const recAmount = (sale.paymentType === 'debito' || sale.paymentType === 'credito') ?
+          sale.amount * (hairdresserCommissions.marcos.rec / 100) : 0;
         const comAmount = sale.amount * (hairdresserCommissions.marcos.com / 100);
         return sum + (recAmount + comAmount);
-      }, 0),
-      retencion: marcosSales.reduce((sum, sale) =>
-        sum + (sale.amount * (hairdresserCommissions.marcos.ret / 100)), 0)
+      }, 0)
     },
     OTRO: {
       ventas: otroSales.reduce((sum, sale) => sum + sale.amount, 0),
@@ -4028,12 +3918,11 @@ function updateFigaroTotalesFinales() {
         .filter(sale => sale.paymentType === 'debito' || sale.paymentType === 'credito')
         .reduce((sum, sale) => sum + sale.amount, 0),
       porc: otroSales.reduce((sum, sale) => {
-        const recAmount = sale.amount * (hairdresserCommissions.otro.rec / 100);
+        const recAmount = (sale.paymentType === 'debito' || sale.paymentType === 'credito') ?
+          sale.amount * (hairdresserCommissions.otro.rec / 100) : 0;
         const comAmount = sale.amount * (hairdresserCommissions.otro.com / 100);
         return sum + (recAmount + comAmount);
-      }, 0),
-      retencion: otroSales.reduce((sum, sale) =>
-        sum + (sale.amount * (hairdresserCommissions.otro.ret / 100)), 0)
+      }, 0)
     }
   };
 
@@ -4053,8 +3942,7 @@ function updateFigaroTotalesFinales() {
     { label: 'TF Ventas', dataKeys: ['ventas'] },
     { label: 'TF Venta Tarjeta', dataKeys: ['ventaTarjeta'] },
     { label: 'TF Porc.', dataKeys: ['porc'] },
-    { label: 'Retención', dataKeys: ['retencion'] },
-    { label: 'Líquido', dataKeys: ['ventas', 'porc'], calculateLiquido: true }
+    { label: 'Retención', dataKeys: ['ventas', 'porc'], calculateLiquido: true }
   ];
 
   rowTypes.forEach(rowType => {
@@ -4107,7 +3995,8 @@ function updateFigaroResumenMensualPanel() {
         .filter(sale => sale.paymentType === 'debito' || sale.paymentType === 'credito')
         .reduce((sum, sale) => sum + sale.amount, 0),
       porc: aldoSales.reduce((sum, sale) => {
-        const recAmount = sale.amount * (hairdresserCommissions.aldo.rec / 100);
+        const recAmount = (sale.paymentType === 'debito' || sale.paymentType === 'credito') ?
+          sale.amount * (hairdresserCommissions.aldo.rec / 100) : 0;
         const comAmount = sale.amount * (hairdresserCommissions.aldo.com / 100);
         return sum + (recAmount + comAmount);
       }, 0)
@@ -4118,7 +4007,8 @@ function updateFigaroResumenMensualPanel() {
         .filter(sale => sale.paymentType === 'debito' || sale.paymentType === 'credito')
         .reduce((sum, sale) => sum + sale.amount, 0),
       porc: marcosSales.reduce((sum, sale) => {
-        const recAmount = sale.amount * (hairdresserCommissions.marcos.rec / 100);
+        const recAmount = (sale.paymentType === 'debito' || sale.paymentType === 'credito') ?
+          sale.amount * (hairdresserCommissions.marcos.rec / 100) : 0;
         const comAmount = sale.amount * (hairdresserCommissions.marcos.com / 100);
         return sum + (recAmount + comAmount);
       }, 0)
@@ -4129,7 +4019,8 @@ function updateFigaroResumenMensualPanel() {
         .filter(sale => sale.paymentType === 'debito' || sale.paymentType === 'credito')
         .reduce((sum, sale) => sum + sale.amount, 0),
       porc: otroSales.reduce((sum, sale) => {
-        const recAmount = sale.amount * (hairdresserCommissions.otro.rec / 100);
+        const recAmount = (sale.paymentType === 'debito' || sale.paymentType === 'credito') ?
+          sale.amount * (hairdresserCommissions.otro.rec / 100) : 0;
         const comAmount = sale.amount * (hairdresserCommissions.otro.com / 100);
         return sum + (recAmount + comAmount);
       }, 0)
@@ -4142,11 +4033,9 @@ function updateFigaroResumenMensualPanel() {
     porc: totals.ALDO.porc + totals.MARCOS.porc + totals.OTRO.porc
   };
 
-  // Calculate unique days with sales
   const uniqueSaleDays = new Set(salonSales.map(sale => new Date(sale.date).toISOString().split('T')[0]));
   const numberOfSaleDays = uniqueSaleDays.size;
 
-  // Calculate Prom. Porc. Día
   const promPorcDía = numberOfSaleDays > 0 ? 
     resumenTotals.porc / numberOfSaleDays : 0;
 
@@ -4205,7 +4094,8 @@ function updateFigaroIndicatorsPanel() {
   // Calculate total porcentajes and promedio diario
   const totalPorcentajes = salonSales.reduce((total, sale) => {
     const hairdresser = sale.hairdresser.toLowerCase();
-    const recAmount = sale.amount * (hairdresserCommissions[hairdresser].rec / 100);
+    const recAmount = (sale.paymentType === 'debito' || sale.paymentType === 'credito') ?
+      sale.amount * (hairdresserCommissions[hairdresser].rec / 100) : 0;
     const comAmount = sale.amount * (hairdresserCommissions[hairdresser].com / 100);
     return total + (recAmount + comAmount);
   }, 0);
@@ -4218,41 +4108,23 @@ function updateFigaroIndicatorsPanel() {
   // Calculate ingreso faltante (proyeccion - totalPorcentajes)
   const ingresoFaltante = proyeccion - totalPorcentajes;
 
-  // Calculate diferencia semanal for selected week
+  // Calculate diferencia semanal for selected week from Semanas Figaro panel
   const selectedWeek = figaroIndicators.selectedWeek || 1;
-
-  // Get all sales for the selected week
-  const weekSales = salonSales.filter(sale => parseInt(sale.week) === selectedWeek);
-
-  // Calculate the weekly difference (diferencia semanal)
+  
+  // Find the diferencia semanal value for the selected week in the Semanas Figaro panel
   let diferenciaSemanal = 0;
-
-  if (weekSales.length > 0) {
-    const marcosSales = weekSales.filter(sale => sale.hairdresser === 'MARCOS');
-    const otroSales = weekSales.filter(sale => sale.hairdresser === 'OTRO');
-
-    // Calculate Marcos' difference
-    const marcosDiferencia = marcosSales.reduce((sum, sale) => {
-      if (sale.paymentType === 'debito' || sale.paymentType === 'credito') {
-        const recAmount = sale.amount * (hairdresserCommissions.marcos.rec / 100);
-        const comAmount = sale.amount * (hairdresserCommissions.marcos.com / 100);
-        return sum + (sale.amount - (recAmount + comAmount));
+  const weekContainers = document.querySelectorAll('.figaro-semanas-content .week-summary-container');
+  
+  weekContainers.forEach(container => {
+    const weekHeader = container.querySelector('h4');
+    if (weekHeader && weekHeader.textContent === `Semana ${selectedWeek}`) {
+      const diferenciaSemanalElement = container.querySelector('.diferencia-semanal');
+      if (diferenciaSemanalElement) {
+        const value = diferenciaSemanalElement.textContent.trim();
+        diferenciaSemanal = parseFloat(value.replace(/[^0-9-.,]/g, '').replace(/\./g, '').replace(',', '.')) || 0;
       }
-      return sum;
-    }, 0);
-
-    // Calculate Otro's difference
-    const otroDiferencia = otroSales.reduce((sum, sale) => {
-      if (sale.paymentType === 'debito' || sale.paymentType === 'credito') {
-        const recAmount = sale.amount * (hairdresserCommissions.otro.rec / 100);
-        const comAmount = sale.amount * (hairdresserCommissions.otro.com / 100);
-        return sum + (sale.amount - (recAmount + comAmount));
-      }
-      return sum;
-    }, 0);
-
-    diferenciaSemanal = marcosDiferencia + otroDiferencia;
-  }
+    }
+  });
 
   indicatorsContent.innerHTML = `
     <div class="indicator-item">
@@ -4321,7 +4193,7 @@ function updateFigaroIndicatorsPanel() {
   const difSemanalFigaroValueElement = document.querySelector('.data-box:nth-child(2) .data-content p');
   difSemanalFigaroValueElement.textContent = formatCurrency(diferenciaSemanal);
 
-  // ... rest of existing code to add event listeners ...
+  // ... rest of existing code ...
   // Add event listeners for week selection and editable values
   const weekSelector = document.getElementById('weekSelector');
   weekSelector.addEventListener('change', (e) => {
@@ -4443,8 +4315,6 @@ function loadFromLocalStorage() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  loadFromLocalStorage();
-
   const timeOptions = { 
     timeZone: 'America/Punta_Arenas',
     year: 'numeric',
