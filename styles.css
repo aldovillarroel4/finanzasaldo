@@ -2018,6 +2018,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   display: flex; /* Added to align items horizontally */
   align-items: center; /* Center items vertically */
   gap: 20px; /* Space between title and panel */
+  justify-content: space-between; /* Add this to push button to right */
 }
 
 .figaro-header h2 {
@@ -2027,6 +2028,26 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-weight: 700;
   white-space: nowrap; /* Prevent title from wrapping */
   min-width: max-content; /* Ensure title doesn't shrink */
+}
+
+.figaro-year-btn {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: 6px 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  min-width: 100px; /* Added narrower width */
+  max-width: 120px; /* Added maximum width */
+  white-space: nowrap; /* Prevent text wrapping */
+}
+
+.figaro-year-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .black-panel {

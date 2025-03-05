@@ -1046,7 +1046,7 @@ document.getElementById('transactionForm').addEventListener('submit', (e) => {
   
   // Validate amount before proceeding
   if (!amount || isNaN(amount)) {
-    return; // Exit if amount is invalid
+    return; // Don't submit if amount is invalid
   }
 
   const currentAccount = document.getElementById('account').value;
@@ -3942,22 +3942,35 @@ function updateFigaroTotalesFinales() {
     { label: 'TF Ventas', dataKeys: ['ventas'] },
     { label: 'TF Venta Tarjeta', dataKeys: ['ventaTarjeta'] },
     { label: 'TF Porc.', dataKeys: ['porc'] },
-    { label: 'Retención', dataKeys: ['ventas', 'porc'], calculateLiquido: true }
+    { label: 'Retención', dataKeys: ['ventas'], calculateRetention: true },
+    { label: 'Líquido', dataKeys: ['ventas', 'porc'], calculateLiquido: true } // Add new row type
   ];
 
   rowTypes.forEach(rowType => {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td style="text-align: left;">${rowType.label}</td>`;
     if (hasAldoSales) {
-      const aldoValue = rowType.calculateLiquido ? totals.ALDO.ventas - totals.ALDO.porc : totals.ALDO[rowType.dataKeys[0]];
+      const aldoValue = rowType.calculateRetention ? 
+        totals.ALDO.ventas * (hairdresserCommissions.aldo.ret / 100) :
+        rowType.calculateLiquido ?
+        totals.ALDO.ventas - totals.ALDO.porc : // Calculate líquido
+        totals.ALDO[rowType.dataKeys[0]];
       tr.innerHTML += `<td>${formatCurrency(aldoValue)}</td>`;
     }
     if (hasMarcosSales) {
-      const marcosValue = rowType.calculateLiquido ? totals.MARCOS.ventas - totals.MARCOS.porc : totals.MARCOS[rowType.dataKeys[0]];
+      const marcosValue = rowType.calculateRetention ? 
+        totals.MARCOS.ventas * (hairdresserCommissions.marcos.ret / 100) :
+        rowType.calculateLiquido ?
+        totals.MARCOS.ventas - totals.MARCOS.porc : // Calculate líquido
+        totals.MARCOS[rowType.dataKeys[0]];
       tr.innerHTML += `<td>${formatCurrency(marcosValue)}</td>`;
     }
     if (hasOtroSales) {
-      const otroValue = rowType.calculateLiquido ? totals.OTRO.ventas - totals.OTRO.porc : totals.OTRO[rowType.dataKeys[0]];
+      const otroValue = rowType.calculateRetention ? 
+        totals.OTRO.ventas * (hairdresserCommissions.otro.ret / 100) :
+        rowType.calculateLiquido ?
+        totals.OTRO.ventas - totals.OTRO.porc : // Calculate líquido
+        totals.OTRO[rowType.dataKeys[0]];
       tr.innerHTML += `<td>${formatCurrency(otroValue)}</td>`;
     }
     tableBody.appendChild(tr);
