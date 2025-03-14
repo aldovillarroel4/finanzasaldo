@@ -9,7 +9,7 @@
 body {
   font-family: Arial, sans-serif;
   line-height: 1.6;
-  background-color: #f4f4f4;
+  background-color: #666666; /* Changed to medium gray */
 }
 
 .container {
@@ -38,15 +38,15 @@ h3 {
 
 /* Updated styles for the summary section */
 .summary-section {
-  background: linear-gradient(to right, #2c3e50, #3498db);
-  color: white;
+  background: linear-gradient(to right, #1a1a1a, #333333); /* Changed to grayscale gradient */
+  color: #ffffff;
   position: relative;  
-  padding: 15px; /* Reduced padding */
+  padding: 15px;
 }
 
 .summary-section h2,
 .summary-section h3 {
-  color: white;
+  color: #ffffff;
 }
 
 .summary-content {  
@@ -63,8 +63,8 @@ h3 {
   font-size: 1.3em;
   padding: 15px;
   min-height: 180px;
-  min-width: 280px; /* Added min-width to ensure minimum width */
-  background: rgba(255, 255, 255, 0.1);
+  min-width: 280px;
+  background: rgba(255, 255, 255, 0.05); /* Changed to light gray */
   border-radius: 8px;
   display: flex;
   flex-direction: column;
@@ -76,10 +76,11 @@ h3 {
 }
 
 #totalAmount {
-  font-size: 2.2em; /* Slightly smaller font size */
+  font-size: 2.2em;
   font-weight: bold;
-  margin-top: 10px; /* Reduced margins */
+  margin-top: 10px;
   margin-bottom: 15px;
+  color: #ffffff; /* Ensure white text */
 }
 
 .balance-indicators {
@@ -95,21 +96,23 @@ h3 {
   padding: 3px 8px; /* Reduced padding */
   display: flex;
   justify-content: space-between;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08); /* Lighter gray */
   border-radius: 4px;
 }
 
 .balance-indicator .label {
   font-weight: bold;
+  color: #cccccc; /* Light gray text */
 }
 
 .balance-indicator .value {
   font-family: inherit;
+  color: #ffffff; /* White text */
 }
 
 .accounts-summary {
   padding: 15px; /* Reduced padding */
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05); /* Very light gray */
   border-radius: 8px;
   position: relative;
   height: fit-content;
@@ -149,6 +152,8 @@ h3 {
   cursor: pointer;
   transition: background-color 0.3s ease;
   width: auto;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add subtle shadow */
 }
 
 .add-account-btn:hover { 
@@ -168,7 +173,7 @@ h3 {
 }
 
 .treatment-section {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03); /* Slightly darker gray */
   border-radius: 6px;
   padding: 12px; /* Increased padding */
   height: fit-content;
@@ -176,10 +181,10 @@ h3 {
 }
 
 .treatment-section h4 {
-  color: white;
+  color: #ffffff;
   text-align: center;
   margin-bottom: 6px; /* Reduced from 8px */
-  font-size: 0.9em; /* Reduced from 1em */
+  font-size: 0.9em;
 }
 
 .treatment-total {
@@ -189,10 +194,11 @@ h3 {
   font-size: 1.2em; /* Increased from 1em */
   font-weight: 700;
   padding: 8px 12px; /* Increased padding from 4px 6px */
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08); /* Light gray background */
   border-radius: 4px;
   position: relative;
   margin-bottom: 8px; /* Increased from 6px */
+  color: #ffffff; /* White text */
 }
 
 .treatment-total::before {  
@@ -286,7 +292,7 @@ button:hover {
 }
 
 .transaction-section {
-  background: linear-gradient(to right, #2c3e50, #3498db);
+  background: linear-gradient(to right, #1a1a1a, #333333); /* Changed to grayscale gradient */
   color: white;
   margin-bottom: 0;
   padding: 15px;
@@ -294,11 +300,11 @@ button:hover {
 
 .transaction-section h2,
 .transaction-section label {
-  color: white;
+  color: white; 
 }
 
 .transaction-section form {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.1); /* Light gray semi-transparent background */
   padding: 15px;
   border-radius: 8px;
   box-shadow: none;
@@ -307,10 +313,10 @@ button:hover {
 
 .transaction-section input,
 .transaction-section select {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.9); /* Nearly white background */
   border: none;
   padding: 8px;
-  color: #2c3e50;
+  color: #2c3e50; /* Dark gray text */
   font-size: 0.95em;
 }
 
@@ -323,17 +329,77 @@ button:hover {
 .transaction-section button[type="submit"] {
   background-color: rgba(46, 204, 113, 0.9);
   color: white;
-  padding: 12px;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .transaction-section button[type="submit"]:hover {
   background-color: rgba(46, 204, 113, 1);
+}
+
+.type-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.type-button {
+  flex: 1;
+  padding: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: bold;
+  font-size: 0.9em;
+}
+
+.type-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.type-button.selected {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+.type-button.ingreso {
+  border-color: rgba(39, 174, 96, 0.5);
+}
+
+.type-button.ingreso:hover,
+.type-button.ingreso.selected {
+  background: rgba(39, 174, 96, 0.8); 
+  border-color: rgba(39, 174, 96, 0.8);
+}
+
+.type-button.gasto {
+  border-color: rgba(231, 76, 60, 0.5);
+}
+
+.type-button.gasto:hover,
+.type-button.gasto.selected {
+  background: rgba(231, 76, 60, 0.8); 
+  border-color: rgba(231, 76, 60, 0.8);
+}
+
+.type-button.transferencia {
+  border-color: rgba(243, 156, 18, 0.5);
+}
+
+.type-button.transferencia:hover,
+.type-button.transferencia.selected {
+  background: rgba(243, 156, 18, 0.8); 
+  border-color: rgba(243, 156, 18, 0.8);
+}
+
+#destinationAccountGroup {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+#destinationAccountGroup.show {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .history-section {
@@ -344,6 +410,7 @@ button:hover {
   display: flex;
   flex-direction: column;
   overflow: hidden; 
+  background-color: #f8f9fa;
 }
 
 .history-section h2 {
@@ -651,7 +718,6 @@ button:hover {
 
 .type-button:hover {
   background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .type-button.selected {
@@ -735,6 +801,8 @@ button:hover {
   font-size: 14px;
   width: auto;
   transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add subtle shadow */
 }
 
 .backup-btn:hover {
@@ -959,6 +1027,8 @@ button:hover {
   font-size: 14px;
   width: auto;
   transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add subtle shadow */
 }
 
 .hide-btn:hover {
@@ -1018,9 +1088,27 @@ button:hover {
   border-bottom: 1px solid #eee;
 }
 
+.backup-option:nth-child(1) {
+  background: #27ae60;
+  color: white;
+}
+
+.backup-option:nth-child(1):hover {
+  background: #219a52;
+}
+
+.backup-option:nth-child(2) {
+  background: #3498db;
+  color: white;
+}
+
+.backup-option:nth-child(2):hover {
+  background: #2980b9;
+}
+
 /* Update external data panel styles */
 .external-data {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05); /* Very light gray */
   border-radius: 8px;
   padding: 15px;
   height: fit-content;
@@ -1036,7 +1124,7 @@ button:hover {
 }
 
 .external-data h3 {
-  color: white;
+  color: #ffffff;
   text-align: center;
   margin-bottom: 6px;
   font-size: 0.9em;
@@ -1071,18 +1159,18 @@ button:hover {
 .data-box {
   padding: 6px 8px;
   margin-bottom: 4px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08); /* Light gray */
   border-radius: 4px;
   transition: background-color 0.2s ease;
 }
 
 .data-box:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12); /* Slightly lighter on hover */
 }
 
 .data-box h4 {
   background: none;
-  color: white;
+  color: #ffffff;
   font-size: 0.9em;
   margin: 0 0 4px 0;
   padding: 0;
@@ -1092,13 +1180,13 @@ button:hover {
 }
 
 .data-box:first-child {
-  background: rgba(39, 174, 96, 0.8); /* Changed to match add-account-btn green */
-  border: 1px solid rgba(39, 174, 96, 0.9);
+  background: rgba(39, 174, 96, 0.7); /* Slightly more transparent green */
+  border: 1px solid rgba(39, 174, 96, 0.8);
 }
 
 .data-box:nth-child(2) {
-  background-color: rgba(231, 76, 60, 0.8); /* Red background color */
-  border: 1px solid rgba(231, 76, 60, 0.9);
+  background-color: rgba(231, 76, 60, 0.7); /* Slightly more transparent red */
+  border: 1px solid rgba(231, 76, 60, 0.8);
 }
 
 /* Add new styles for the salon section */
@@ -1326,10 +1414,11 @@ button:hover {
 
 .hairdresser-total {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-between;  
   align-items: center;
-  padding: 12px;
-  margin-bottom: 15px;
+  font-size: 1.2em; /* Increased from 1em */
+  font-weight: 700;
+  padding: 8px 12px; /* Increased padding from 4px 6px */
   background: rgba(255, 255, 255, 0.05);
   border-radius: 6px;
   border: 1px solid #e9ecef;
@@ -1405,8 +1494,8 @@ button:hover {
 
 /* Update totals panel styles */
 .totals-panel {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
+  background: #f0f0f0; /* Changed to a light gray background */
+  border: 1px solid #e0e0e0; /* Lighter border */
   border-radius: 8px;
   padding: 15px;
   margin: -20px 20px 20px 20px; /* Changed from -10px to -20px to move panel up more */
@@ -1424,9 +1513,9 @@ button:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: white;
+  background: #ffffff; /* White background for contrast */
   border-radius: 4px;
-  border: 1px solid #e9ecef;
+  border: 1px solid #e0e0e0;
 }
 
 .total-label {
@@ -1525,12 +1614,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* Update the Total Abonos panel styles */
 .total-abonos-panel {
-  background: white;
-  color: #333;
+  background: linear-gradient(to right, #000000, #2c3e50);
+  color: white;
   border-radius: 8px;
   padding: 20px;
   height: 800px;  
-  border: 1px solid #eee;
+  border: none;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -1539,13 +1628,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .total-abonos-panel h2 {
-  color: #2c3e50;
-  border-bottom: 2px solid #3498db;
+  color: white !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 10px;
   margin-bottom: 20px;
   position: sticky;
   top: 0;
-  background: white;
+  background: linear-gradient(to right, #000000, #2c3e50);
   z-index: 1;
   width: 100%;
   text-align: center;
@@ -1553,9 +1642,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Add new styles for the paid transactions total */
 .paid-transactions-total {
-  background: #2c3e50;
+  background: rgba(255, 255, 255, 0.1);
   color: white;
   padding: 10px; 
   border-radius: 6px; 
@@ -1583,21 +1671,21 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .daily-totals-panel {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   padding: 12px;
   margin-bottom: 12px;
   width: 100%;
-  max-width: 280px; 
+  max-width: 280px;
 }
 
 .daily-totals-panel h3 {
-  color: #2c3e50;
+  color: white;
   margin-bottom: 12px;
   font-size: 1em;
   padding-bottom: 8px;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .daily-totals-grid {
@@ -1607,50 +1695,41 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .daily-total-item {
-  background: white;
+  background: rgba(255, 255, 255, 0.05);
   padding: 6px 12px;
   border-radius: 6px;
-  border: 1px solid #e9ecef;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
-  flex-direction: row; 
   justify-content: space-between;
   align-items: center;
 }
 
 .daily-total-item.total-day {
-  background: #edf2f7;
+  background: rgba(255, 255, 255, 0.08);
 }
 
-.daily-total-item.total-day .daily-total-label,
-.daily-total-item.total-day .daily-total-value {
-  font-weight: 700;
-  color: #2c3e50;
-}
-
-.daily-total-label {
-  font-weight: 500;
-  color: #2c3e50;
-  font-size: 0.9em;
-}
-
-.daily-total-value {
-  color: #34495e;
+.daily-total-item .daily-total-label {
+  color: rgba(255, 255, 255, 0.9);
   font-weight: 500;
   font-size: 0.9em;
 }
 
-/* Add new styles for the paid button */
+.daily-total-item .daily-total-value {
+  color: white;
+  font-weight: 500;
+  font-size: 0.9em;
+}
+
 .daily-paid-btn {
   width: 100%;
   padding: 8px;
   margin-top: 12px;
-  background: #95a5a6;
+  background: rgba(255, 255, 255, 0.1);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9em;
-  width: 100%;
   transition: all 0.3s ease;
 }
 
@@ -1709,6 +1788,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: #f8f9fa; /* Added gray background */
 }
 
 .salon-filter-buttons {
@@ -1781,7 +1861,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .total-item.total-neto-tarjeta,
 .total-item:nth-child(2),
 .total-item:nth-child(8) {  
-  background-color: #e8f5e9; 
+  background-color: #e8e8e8; /* Changed to gray instead of green */
 }
 
 /* Add styles for the delete-all button */
@@ -1877,7 +1957,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-size: 1.2em; /* Increased from 1.1em as requested in previous prompt */
   color: rgba(255, 255, 255, 0.9);
   white-space: nowrap;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .account-name-container {
@@ -2205,29 +2285,20 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .ventas-table-header {
   display: grid;
-  grid-template-columns: 0.8fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-  gap: 10px;
-  padding: 10px;
-  background: #f8f9fa;
-  border-bottom: 2px solid #3498db;
-  font-weight: bold;
-  color: #2c3e50;
-  position: sticky;
-  top: 0;
-  z-index: 1;
+  grid-template-columns: 0.8fr 1.2fr 1.3fr 1.3fr 1.3fr 1fr 1fr 1.3fr; /* Adjusted ratios for better spacing */
+  gap: 15px;
+  padding: 8px 15px;
+  align-items: center;
+  width: 100%;
 }
 
 .ventas-table-row {
   display: grid;
-  grid-template-columns: 0.8fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-  gap: 10px;
-  padding: 8px 10px;
-  border-bottom: 1px solid #eee;
+  grid-template-columns: 0.8fr 1.2fr 1.3fr 1.3fr 1.3fr 1fr 1fr 1.3fr; /* Adjusted ratios for better spacing */
+  gap: 15px;
+  padding: 8px 15px;
   align-items: center;
-}
-
-.ventas-table-row:hover {
-  background-color: #f8f9fa;
+  width: 100%;
 }
 
 .ventas-table-cell {
@@ -2281,9 +2352,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .marcos-content .ventas-table-header,
 .marcos-content .ventas-table-row {
   display: grid;
-  grid-template-columns: 0.8fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-  gap: 10px;
-  padding: 8px 10px;
+  grid-template-columns: 0.8fr 1.2fr 1.3fr 1.3fr 1.3fr 1fr 1fr 1.3fr; /* Adjusted ratios for better spacing */
+  gap: 15px;
+  padding: 8px 15px;
   align-items: center;
 }
 
@@ -2343,9 +2414,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .otro-content .ventas-table-header,
 .otro-content .ventas-table-row {
   display: grid;
-  grid-template-columns: 0.8fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-  gap: 10px;
-  padding: 8px 10px;
+  grid-template-columns: 0.8fr 1.2fr 1.3fr 1.3fr 1.3fr 1fr 1fr 1.3fr; /* Adjusted ratios for better spacing */
+  gap: 15px;
+  padding: 8px 15px;
   align-items: center;
 }
 
@@ -3756,4 +3827,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .tcr-modal-content h2 {
   color: white;
+}
+
+.account-balance {
+  font-family: inherit;
+  font-size: 1.2em;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  font-weight: 700;
 }
