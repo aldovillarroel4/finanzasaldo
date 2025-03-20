@@ -1218,7 +1218,7 @@ button:hover {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 0 4px;
+  padding: 0 0px;
 }
 
 .sale-item {
@@ -1226,7 +1226,7 @@ button:hover {
   grid-template-columns: 52px 103px 83px 72px 83px 95px 83px 93px 83px 130px 62px 72px;  
   gap: 5px;
   align-items: center;
-  padding: 4px;
+  padding: 3px;
   border-bottom: 1px solid #000;
   transition: background-color 0.2s ease, transform 0.2s ease;
   color: #fff;
@@ -1236,7 +1236,7 @@ button:hover {
 .sale-item > span {
   text-align: center;
   white-space: nowrap;
-  padding: 0 4px;
+  padding: 0 0px;
 }
 
 .sale-item span:nth-child(5) {  
@@ -1626,14 +1626,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .daily-total-label {
-  font-weight: 500;
+  font-weight: 600;
   color: #fff;
   font-size: 0.9em;
 }
 
 .daily-total-value {
   color: #fff;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.9em;
 }
 
@@ -2048,7 +2048,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .black-panel {
-  background: black;
+  background: #0000;
   flex: 1; /* Take remaining space */
   height: 60px; /* Reduced height */
   border-radius: 8px;
@@ -2891,7 +2891,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   margin: 20px 0;
   width: 100%;
-  height: 500px;
+  height: 530px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -2977,7 +2977,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .venta-semanal {
   color: #3498db;
   margin-top: 6px;
-  padding: 4px;
+  padding: 6px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   font-weight: 700;
@@ -2989,7 +2989,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .porc-semanal {
   margin-top: 6px;
-  padding: 4px;
+  padding: 6px;
   background: rgba(39, 174, 96, 0.8); /* Changed to green */
   border-radius: 4px;
   color: white; /* Changed to white */
@@ -3002,7 +3002,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .diferencia-semanal {
   margin-top: 6px;
-  padding: 4px;
+  padding: 6px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   color: #e74c3c; /* Changed to red (#e74c3c) */
@@ -3037,7 +3037,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .venta-semanal,
 .venta-tarjeta-semanal {
   margin-top: 6px; /* Match the gap */
-  padding: 4px;
+  padding: 6px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   font-weight: 700;
@@ -3122,7 +3122,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .prom-porc-semanal {
   margin-top: 6px;
-  padding: 4px;
+  padding: 6px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   color: #f1c40f; /* Yellow color for text */
