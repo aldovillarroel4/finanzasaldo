@@ -1652,12 +1652,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   transition: all 0.3s ease;
 }
 
+.daily-paid-btn:hover {
+  background: #27ae60;
+}
+
 .daily-paid-btn.paid {
   background: #27ae60;
 }
 
 .daily-paid-btn.paid:hover {
-  background: #219a52;
+  background: #bb3131;
 }
 
 .sale-item .payment-status {
@@ -3322,14 +3326,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .resumen-mensual-label {
   color: white;
   font-weight: 700;
-  font-size: 0.9em;
+  font-size: 1.2em;
 }
 
 .resumen-mensual-value {
   color: white;
   font-weight: 600;
-  font-size: 1.5em;
-  font-family: monospace;
+  font-size: 1.3em;
+  font-family: sans;
 }
 
 .indicator-item {
