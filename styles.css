@@ -1557,9 +1557,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: white;
   padding: 10px; 
   border-radius: 6px; 
-  margin-top: -5px;
+  margin-top: -9px;
   width: 100%;
-  max-width: 240px; 
+  max-width: 283px; 
   text-align: center;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   position: sticky;
@@ -2922,12 +2922,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   min-width: 160px; 
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
   height: fit-content;
   position: sticky;
   left: 0;
   z-index: 2;
-  margin-top: 65px;
+  margin-top: 66px;
 }
 
 .figaro-totals-labels .total-label {
@@ -2935,7 +2935,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-weight: 700; 
   font-size: 0.85em;
   line-height: 1.2;
-  padding: 6px 0;
+  padding: 6px 8px;
   white-space: nowrap;
 }
 
@@ -3056,15 +3056,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   flex: 0 0 auto;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
-  padding: 15px;
-  min-width: 280px;
+  padding: 13px;
+  min-width: 279px;
   max-width: 280px;
-  min-height: 400px;
+  min-height: 407px;
 }
 
 .week-summary-container h4 {
   color: white;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   text-align: center;
   font-size: 0.9em;
   opacity: 0.9;
@@ -3106,7 +3106,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   text-align: center;
   color: rgba(255, 255, 255, 0.9);
   font-size: 0.85em;
-  margin-bottom: 10px;
+  margin-bottom: 11px;
 }
 
 .value-row {
