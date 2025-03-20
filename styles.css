@@ -9,7 +9,7 @@
 body {
   font-family: Arial, sans-serif;
   line-height: 1.6;
-  background-color: #666666; /* Changed to medium gray */
+  background-color: #1c1919;
 }
 
 .container {
@@ -19,7 +19,7 @@ body {
 }
 
 section {
-  background: white;
+  background: linear-gradient(to right, #000000, #2c3e50) !important;;
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
@@ -27,7 +27,7 @@ section {
 }
 
 h2 {
-  color: #333;
+  color: #fff;
   margin-bottom: 20px;
 }
 
@@ -38,15 +38,15 @@ h3 {
 
 /* Updated styles for the summary section */
 .summary-section {
-  background: linear-gradient(to right, #000000, #2c3e50); /* Changed to match FIGARO panel gradient */
-  color: #ffffff;
+  background: linear-gradient(to right, #000000, #2c3e50);
+  color: white;
   position: relative;  
-  padding: 15px;
+  padding: 15px; /* Reduced padding */
 }
 
 .summary-section h2,
 .summary-section h3 {
-  color: #ffffff;
+  color: white;
 }
 
 .summary-content {  
@@ -63,8 +63,8 @@ h3 {
   font-size: 1.3em;
   padding: 15px;
   min-height: 180px;
-  min-width: 280px;
-  background: rgba(255, 255, 255, 0.05); /* Updated to match FIGARO panel style */
+  min-width: 280px; /* Added min-width to ensure minimum width */
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   display: flex;
   flex-direction: column;
@@ -76,11 +76,10 @@ h3 {
 }
 
 #totalAmount {
-  font-size: 2.2em;
+  font-size: 2.2em; /* Slightly smaller font size */
   font-weight: bold;
-  margin-top: 10px;
+  margin-top: 10px; /* Reduced margins */
   margin-bottom: 15px;
-  color: #ffffff; /* Ensure white text */
 }
 
 .balance-indicators {
@@ -93,31 +92,29 @@ h3 {
 }
 
 .balance-indicator {
-  padding: 3px 8px;
+  padding: 3px 8px; /* Reduced padding */
   display: flex;
   justify-content: space-between;
-  background: rgba(255, 255, 255, 0.08); /* Updated to match FIGARO panel style */
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
 }
 
 .balance-indicator .label {
   font-weight: bold;
-  color: #cccccc; /* Light gray text */
 }
 
 .balance-indicator .value {
   font-family: inherit;
-  color: #ffffff; /* White text */
 }
 
 .accounts-summary {
-  padding: 15px;
-  background: rgba(255, 255, 255, 0.05); /* Updated to match FIGARO panel style */
+  padding: 15px; /* Reduced padding */
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   position: relative;
   height: fit-content;
   min-height: 100%;
-  min-width: 600px;
+  min-width: 600px; /* Added min-width */
 }
 
 /* Updated styles for account buttons */
@@ -152,8 +149,6 @@ h3 {
   cursor: pointer;
   transition: background-color 0.3s ease;
   width: auto;
-  border: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add subtle shadow */
 }
 
 .add-account-btn:hover { 
@@ -173,7 +168,7 @@ h3 {
 }
 
 .treatment-section {
-  background: rgba(255, 255, 255, 0.03); /* Slightly darker gray */
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 6px;
   padding: 12px; /* Increased padding */
   height: fit-content;
@@ -181,10 +176,10 @@ h3 {
 }
 
 .treatment-section h4 {
-  color: #ffffff;
+  color: white;
   text-align: center;
   margin-bottom: 6px; /* Reduced from 8px */
-  font-size: 0.9em;
+  font-size: 0.9em; /* Reduced from 1em */
 }
 
 .treatment-total {
@@ -194,11 +189,10 @@ h3 {
   font-size: 1.2em; /* Increased from 1em */
   font-weight: 700;
   padding: 8px 12px; /* Increased padding from 4px 6px */
-  background: rgba(255, 255, 255, 0.08); /* Light gray background */
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   position: relative;
   margin-bottom: 8px; /* Increased from 6px */
-  color: #ffffff; /* White text */
 }
 
 .treatment-total::before {  
@@ -292,7 +286,7 @@ button:hover {
 }
 
 .transaction-section {
-  background: linear-gradient(to right, #000000, #2c3e50); /* Changed to match FIGARO panel gradient */
+  background: linear-gradient(to right, #000000, #2c3e50);
   color: white;
   margin-bottom: 0;
   padding: 15px;
@@ -300,11 +294,11 @@ button:hover {
 
 .transaction-section h2,
 .transaction-section label {
-  color: white; 
+  color: white;
 }
 
 .transaction-section form {
-  background: rgba(255, 255, 255, 0.1); /* Light gray semi-transparent background */
+  background: rgba(255, 255, 255, 0.1);
   padding: 15px;
   border-radius: 8px;
   box-shadow: none;
@@ -313,10 +307,10 @@ button:hover {
 
 .transaction-section input,
 .transaction-section select {
-  background: rgba(255, 255, 255, 0.9); /* Nearly white background */
+  background: rgba(255, 255, 255, 0.9);
   border: none;
   padding: 8px;
-  color: #2c3e50; /* Dark gray text */
+  color: #2c3e50;
   font-size: 0.95em;
 }
 
@@ -329,97 +323,27 @@ button:hover {
 .transaction-section button[type="submit"] {
   background-color: rgba(46, 204, 113, 0.9);
   color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .transaction-section button[type="submit"]:hover {
   background-color: rgba(46, 204, 113, 1);
 }
 
-.type-buttons {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.type-button {
-  flex: 1;
-  padding: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: bold;
-  font-size: 0.9em;
-}
-
-.type-button:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.type-button.selected {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.8);
-}
-
-.type-button.ingreso {
-  border-color: rgba(39, 174, 96, 0.5);
-}
-
-.type-button.ingreso:hover,
-.type-button.ingreso.selected {
-  background: rgba(39, 174, 96, 0.8); 
-  border-color: rgba(39, 174, 96, 0.8);
-}
-
-.type-button.gasto {
-  border-color: rgba(231, 76, 60, 0.5);
-}
-
-.type-button.gasto:hover,
-.type-button.gasto.selected {
-  background: rgba(231, 76, 60, 0.8); 
-  border-color: rgba(231, 76, 60, 0.8);
-}
-
-.type-button.transferencia {
-  border-color: rgba(243, 156, 18, 0.5);
-}
-
-.type-button.transferencia:hover,
-.type-button.transferencia.selected {
-  background: rgba(243, 156, 18, 0.8); 
-  border-color: rgba(243, 156, 18, 0.8);
-}
-
-#destinationAccountGroup {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  transition: all 0.3s ease;
-  max-height: 0;
-  opacity: 0;
-  margin: 0;
-  padding: 0 15px;
-  overflow: hidden;
-}
-
-#destinationAccountGroup.show {
-  max-height: 100px;
-  opacity: 1;
-  margin-bottom: 15px;
-  padding: 15px;
-}
-
 .history-section {
   margin-bottom: 0; 
   position: relative;
-  border: 2px solid #000;
+  border: 2px solid #fff;
   height: 800px;  
   display: flex;
   flex-direction: column;
   overflow: hidden; 
-  background-color: #f8f9fa;
 }
 
 .history-section h2 {
@@ -456,7 +380,7 @@ button:hover {
 .transactions-list p {
   padding: 20px;
   margin: 20px 0;
-  background: #f8f9fa;
+  background: #202326;
   border-radius: 8px;
   text-align: center;
 }
@@ -580,7 +504,7 @@ button:hover {
   grid-template-columns: auto 90px 1.2fr auto 1.3fr auto auto; 
   align-items: start;
   cursor: grab;
-  background: white;
+  background: #242222;
   transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
@@ -590,7 +514,7 @@ button:hover {
   align-items: center;
   text-align: center;
   font-weight: bold;
-  min-width: 120px; 
+  min-width: 87px; 
   justify-content: center;
 }
 
@@ -639,11 +563,11 @@ button:hover {
 }
 
 .ingreso {
-  color: #27ae60;
+  color: #079f48;
 }
 
 .gasto {
-  color: #e74c3c;
+  color: #ff1800;
 }
 
 .transferencia {
@@ -727,6 +651,7 @@ button:hover {
 
 .type-button:hover {
   background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .type-button.selected {
@@ -810,8 +735,6 @@ button:hover {
   font-size: 14px;
   width: auto;
   transition: all 0.3s ease;
-  border: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add subtle shadow */
 }
 
 .backup-btn:hover {
@@ -1036,8 +959,6 @@ button:hover {
   font-size: 14px;
   width: auto;
   transition: all 0.3s ease;
-  border: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add subtle shadow */
 }
 
 .hide-btn:hover {
@@ -1064,7 +985,7 @@ button:hover {
   top: 100%;
   left: 0;
   width: 100%;
-  background: #000000; /* Changed to black */
+  background: white;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   z-index: 1000;
@@ -1084,40 +1005,22 @@ button:hover {
   text-align: left;
   background: none;
   border: none;
-  color: white; /* Changed text color to white to ensure visibility on black background */
+  color: #333;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
 .backup-option:hover {
-  background-color: #333333; /* Darker gray hover effect */
+  background-color: #f0f0f0;
 }
 
 .backup-option:not(:last-child) {
-  border-bottom: 1px solid #333333; /* Darker border color */
-}
-
-.backup-option:nth-child(1) {
-  background: #27ae60; /* Keep green for Respaldar */
-  color: white;
-}
-
-.backup-option:nth-child(1):hover {
-  background: #219a52;
-}
-
-.backup-option:nth-child(2) {
-  background: #3498db; /* Keep blue for Restaurar */
-  color: white;
-}
-
-.backup-option:nth-child(2):hover {
-  background: #2980b9;
+  border-bottom: 1px solid #eee;
 }
 
 /* Update external data panel styles */
 .external-data {
-  background: rgba(255, 255, 255, 0.05); /* Updated to match FIGARO panel style */
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   padding: 15px;
   height: fit-content;
@@ -1133,7 +1036,7 @@ button:hover {
 }
 
 .external-data h3 {
-  color: #ffffff;
+  color: white;
   text-align: center;
   margin-bottom: 6px;
   font-size: 0.9em;
@@ -1168,18 +1071,18 @@ button:hover {
 .data-box {
   padding: 6px 8px;
   margin-bottom: 4px;
-  background: rgba(255, 255, 255, 0.08); /* Light gray */
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 4px;
   transition: background-color 0.2s ease;
 }
 
 .data-box:hover {
-  background: rgba(255, 255, 255, 0.12); /* Slightly lighter on hover */
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .data-box h4 {
   background: none;
-  color: #ffffff;
+  color: white;
   font-size: 0.9em;
   margin: 0 0 4px 0;
   padding: 0;
@@ -1189,13 +1092,13 @@ button:hover {
 }
 
 .data-box:first-child {
-  background: rgba(39, 174, 96, 0.7); /* Slightly more transparent green */
-  border: 1px solid rgba(39, 174, 96, 0.8);
+  background: rgba(39, 174, 96, 0.8); /* Changed to match add-account-btn green */
+  border: 1px solid rgba(39, 174, 96, 0.9);
 }
 
 .data-box:nth-child(2) {
-  background-color: rgba(231, 76, 60, 0.7); /* Slightly more transparent red */
-  border: 1px solid rgba(231, 76, 60, 0.8);
+  background-color: rgba(231, 76, 60, 0.8); /* Red background color */
+  border: 1px solid rgba(231, 76, 60, 0.9);
 }
 
 /* Add new styles for the salon section */
@@ -1277,7 +1180,7 @@ button:hover {
 }
 
 .salon-sales {
-  background: white;
+  background: rgba(255, 255, 255, 0.1);;
   padding: 0;
   border-radius: 8px;
   height: 600px;
@@ -1298,10 +1201,10 @@ button:hover {
   gap: 3px;
   align-items: center;
   padding: 12px;
-  background: #ffffff;
-  border-bottom: 2px solid #3498db;
+  background: #1c1919;
+  border-bottom: 2px solid #fff;
   font-weight: bold;
-  color: #2c3e50;
+  color: #fff;
   position: sticky;
   top: 0;
   z-index: 1;
@@ -1321,12 +1224,12 @@ button:hover {
 .sale-item {
   display: grid;
   grid-template-columns: 52px 103px 83px 72px 83px 95px 83px 93px 83px 130px 62px 72px;  
-  gap: 3px;
+  gap: 5px;
   align-items: center;
-  padding: 10px;
-  border-bottom: 1px solid #eee;
+  padding: 4px;
+  border-bottom: 1px solid #000;
   transition: background-color 0.2s ease, transform 0.2s ease;
-  color: #333;
+  color: #cac6c6;
   font-size: 0.9em;
 }
 
@@ -1355,7 +1258,7 @@ button:hover {
 }
 
 .sale-item:hover {
-  background-color: #f8f9fa;
+  background-color: #869eb51f;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
@@ -1404,11 +1307,11 @@ button:hover {
   padding: 6px 8px !important;
   border: 1px solid #ddd !important;
   border-radius: 4px !important;
-  font-size: 0.9em !important;
+  font-size: 0.98em !important;
   width: 130px !important; /* Reduced from 150px but still enough to show full date */
   cursor: pointer;
   transition: border-color 0.3s ease;
-  background: white;
+  background: #9d9d9d;
 }
 
 .payment-date-selector:hover {
@@ -1423,11 +1326,10 @@ button:hover {
 
 .hairdresser-total {
   display: flex;
-  justify-content: space-between;  
+  justify-content: space-between;
   align-items: center;
-  font-size: 1.2em; /* Increased from 1em */
-  font-weight: 700;
-  padding: 8px 12px; /* Increased padding from 4px 6px */
+  padding: 12px;
+  margin-bottom: 15px;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 6px;
   border: 1px solid #e9ecef;
@@ -1503,8 +1405,8 @@ button:hover {
 
 /* Update totals panel styles */
 .totals-panel {
-  background: #f0f0f0; /* Changed to a light gray background */
-  border: 1px solid #e0e0e0; /* Lighter border */
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid #e9ecef;
   border-radius: 8px;
   padding: 15px;
   margin: -20px 20px 20px 20px; /* Changed from -10px to -20px to move panel up more */
@@ -1522,23 +1424,23 @@ button:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #ffffff; /* White background for contrast */
+  background: #2b2828;
   border-radius: 4px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #e9ecef;
 }
 
 .total-label {
   font-weight: 600;
-  color: #2c3e50;
+  color: #fff;
   font-size: 0.95em;
   white-space: nowrap;
 }
 
 .total-item .total-value {
-  color: #34495e;
+  color: #fff;
   margin-left: 8px;
   font-size: 0.95em;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .total-item .total-value.negative {
@@ -1561,7 +1463,7 @@ button:hover {
   padding: 2px 4px;
   border-radius: 4px;
   transition: all 0.3s ease;
-  color: #2980b9; /* Bright blue color */
+  color: #ff0404; /* Bright red color */
   font-weight: 600;
   background: rgba(41, 128, 185, 0.1); /* Light blue background */
 }
@@ -1624,11 +1526,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* Update the Total Abonos panel styles */
 .total-abonos-panel {
   background: linear-gradient(to right, #000000, #2c3e50);
-  color: white;
+  color: #fff;
   border-radius: 8px;
   padding: 20px;
   height: 800px;  
-  border: none;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -1637,13 +1538,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .total-abonos-panel h2 {
-  color: white !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
   padding-bottom: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 1px;
   position: sticky;
   top: 0;
-  background: linear-gradient(to right, #000000, #2c3e50);
+  background: #0000;
   z-index: 1;
   width: 100%;
   text-align: center;
@@ -1651,8 +1551,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+/* Add new styles for the paid transactions total */
 .paid-transactions-total {
-  background: rgba(255, 255, 255, 0.1);
+  background: #27ae60;
   color: white;
   padding: 10px; 
   border-radius: 6px; 
@@ -1681,20 +1582,20 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .daily-totals-panel {
   background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #e9ecef;
   border-radius: 8px;
   padding: 12px;
   margin-bottom: 12px;
   width: 100%;
-  max-width: 280px;
+  max-width: 280px; 
 }
 
 .daily-totals-panel h3 {
-  color: white;
+  color: #fff;
   margin-bottom: 12px;
   font-size: 1em;
   padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid #e9ecef;
 }
 
 .daily-totals-grid {
@@ -1704,41 +1605,50 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .daily-total-item {
-  background: rgba(255, 255, 255, 0.05);
+  background: #c8b0b01c;
   padding: 6px 12px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #e9ecef;
   display: flex;
+  flex-direction: row; 
   justify-content: space-between;
   align-items: center;
 }
 
 .daily-total-item.total-day {
-  background: rgba(255, 255, 255, 0.08);
+  background: #edf2f7;
 }
 
-.daily-total-item .daily-total-label {
-  color: rgba(255, 255, 255, 0.9);
+.daily-total-item.total-day .daily-total-label,
+.daily-total-item.total-day .daily-total-value {
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.daily-total-label {
+  font-weight: 500;
+  color: #fff;
+  font-size: 0.9em;
+}
+
+.daily-total-value {
+  color: #fff;
   font-weight: 500;
   font-size: 0.9em;
 }
 
-.daily-total-item .daily-total-value {
-  color: white;
-  font-weight: 500;
-  font-size: 0.9em;
-}
-
+/* Add new styles for the paid button */
 .daily-paid-btn {
   width: 100%;
   padding: 8px;
   margin-top: 12px;
-  background: rgba(255, 255, 255, 0.1);
+  background: #bb3131;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9em;
+  width: 100%;
   transition: all 0.3s ease;
 }
 
@@ -1792,12 +1702,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* Add new styles for salon history */
 .salon-history {
   position: relative;
-  border: 1px solid #eee;
   height: 800px;  
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #f8f9fa; /* Added gray background */
 }
 
 .salon-filter-buttons {
@@ -1870,7 +1778,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .total-item.total-neto-tarjeta,
 .total-item:nth-child(2),
 .total-item:nth-child(8) {  
-  background-color: #e8e8e8; /* Changed to gray instead of green */
+  background-color: #27ae60; 
 }
 
 /* Add styles for the delete-all button */
@@ -1966,7 +1874,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-size: 1.2em; /* Increased from 1.1em as requested in previous prompt */
   color: rgba(255, 255, 255, 0.9);
   white-space: nowrap;
-  font-weight: 700;
+  font-weight: bold;
 }
 
 .account-name-container {
@@ -2189,7 +2097,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .aldo-panel {
-  background: white;
+  background: linear-gradient(to right, #000, #2c3e50) !important;
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -2204,10 +2112,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .aldo-panel h3 {
-  color: #2c3e50;
+  color: #fff;
   margin-bottom: 15px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
 }
 
 /* Add new styles for Marcos' panels with the same configuration as Aldo's */
@@ -2224,7 +2131,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .marcos-panel {
-  background: white;
+  background: linear-gradient(to right, #000, #2c3e50) !important;
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -2239,10 +2146,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .marcos-panel h3 {
-  color: #2c3e50;
+  color: #fff;
   margin-bottom: 15px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
 }
 
 /* Add new styles for Otro's panels with the same configuration as Aldo's and Marcos' */
@@ -2259,7 +2165,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .otro-panel {
-  background: white;
+  background: linear-gradient(to right, #000, #2c3e50) !important;
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -2274,10 +2180,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .otro-panel h3 {
-  color: #2c3e50;
+  color: #fff;
   margin-bottom: 15px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
 }
 
 /* Add new styles for the ventas panel */
@@ -2294,20 +2199,29 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .ventas-table-header {
   display: grid;
-  grid-template-columns: 0.8fr 1.2fr 1.3fr 1.3fr 1.3fr 1fr 1fr 1.3fr; /* Adjusted ratios for better spacing */
-  gap: 15px;
-  padding: 8px 15px;
-  align-items: center;
-  width: 100%;
+  grid-template-columns: 0.8fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  gap: 10px;
+  padding: 10px;
+  background: #000;
+  border-bottom: 2px solid #fff;
+  font-weight: bold;
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .ventas-table-row {
   display: grid;
-  grid-template-columns: 0.8fr 1.2fr 1.3fr 1.3fr 1.3fr 1fr 1fr 1.3fr; /* Adjusted ratios for better spacing */
-  gap: 15px;
-  padding: 8px 15px;
+  grid-template-columns: 0.8fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  gap: 10px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #eee;
   align-items: center;
-  width: 100%;
+}
+
+.ventas-table-row:hover {
+  background-color: #869eb51f;
 }
 
 .ventas-table-cell {
@@ -2319,12 +2233,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: white;
 }
 
 .ventas-table-cell.amount {
   text-align: center; /* Changed from 'right' to 'center' */
-  font-family: monospace;
-  font-size: 1.2em;
+  font-family: sans;
+  font-size: 1em;
   font-weight: 700;
   padding: 0 8px;
   display: flex;
@@ -2361,17 +2276,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .marcos-content .ventas-table-header,
 .marcos-content .ventas-table-row {
   display: grid;
-  grid-template-columns: 0.8fr 1.2fr 1.3fr 1.3fr 1.3fr 1fr 1fr 1.3fr; /* Adjusted ratios for better spacing */
-  gap: 15px;
-  padding: 8px 15px;
+  grid-template-columns: 0.8fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  gap: 10px;
+  padding: 8px 10px;
   align-items: center;
 }
 
 .marcos-content .ventas-table-header {
-  background: #f8f9fa;
-  border-bottom: 2px solid #3498db;
+  background: #000;
+  border-bottom: 2px solid #fff;
   font-weight: bold;
-  color: #2c3e50;
+  color: #fff;
   position: sticky;
   top: 0;
   z-index: 1;
@@ -2383,7 +2298,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .marcos-content .ventas-table-row:hover {
-  background-color: #f8f9fa;
+  background-color: #869eb51f;
 }
 
 .marcos-content .ventas-table-cell {
@@ -2399,8 +2314,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .marcos-content .ventas-table-cell.amount {
   text-align: center;
-  font-family: monospace;
-  font-size: 1.2em;
+  font-family: sans;
+  font-size: 0.9em;
   font-weight: 700;
   padding: 0 8px;
   display: flex;
@@ -2423,17 +2338,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .otro-content .ventas-table-header,
 .otro-content .ventas-table-row {
   display: grid;
-  grid-template-columns: 0.8fr 1.2fr 1.3fr 1.3fr 1.3fr 1fr 1fr 1.3fr; /* Adjusted ratios for better spacing */
-  gap: 15px;
-  padding: 8px 15px;
+  grid-template-columns: 0.8fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  gap: 10px;
+  padding: 8px 10px;
   align-items: center;
 }
 
 .otro-content .ventas-table-header {
-  background: #f8f9fa;
-  border-bottom: 2px solid #3498db;
+  background: #000;
+  border-bottom: 2px solid #fff;
   font-weight: bold;
-  color: #2c3e50;
+  color: #fff;
   position: sticky;
   top: 0;
   z-index: 1;
@@ -2445,7 +2360,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .otro-content .ventas-table-row:hover {
-  background-color: #f8f9fa;
+  background-color: #869eb51f;
 }
 
 .otro-content .ventas-table-cell {
@@ -2461,8 +2376,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .otro-content .ventas-table-cell.amount {
   text-align: center;
-  font-family: monospace;
-  font-size: 1.2em;
+  font-family: sans;
+  font-size: 0.9em;
   font-weight: 700;
   padding: 0 8px;
   display: flex;
@@ -2490,13 +2405,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.85em;
-  color: #2c3e50;
-  font-weight: 500;
+  color: #fff;
+  font-weight: 600;
 }
 
 .header-indicator span {
   font-weight: 700;
-  color: #3498db;
+  color: #f00;
 }
 
 /* Update the grid templates for all ventas tables */
@@ -2529,12 +2444,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: white;
 }
 
 .ventas-table-cell.amount {
   text-align: center; /* Changed from 'right' to 'center' */
-  font-family: monospace;
-  font-size: 1.2em;
+  font-family: sans;
+  font-size: 0.9em;
   font-weight: 700;
   padding: 0 8px;
   display: flex;
@@ -2587,22 +2503,22 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   justify-content: space-between;
   align-items: center;
   padding: 4px 8px; /* Reduced from 8px 12px */
-  background: #f8f9fa;
+  background: white;
   border-radius: 4px;
   border: 1px solid #e9ecef;
 }
 
 .summary-label {
-  color: #2c3e50;
-  font-weight: 500;
+  color: #fff;
+  font-weight: 600;
   font-size: 0.85em; /* Reduced from 0.9em */
 }
 
 .summary-value {
-  color: #34495e;
+  color: #fff;
   font-weight: 600;
-  font-size: 1.2em; /* Increased from 0.9em */
-  font-family: monospace;
+  font-size: 0.9em; /* Increased from 0.9em */
+  font-family: sans;
 }
 
 .aldo-panel.semanas-aldo .aldo-content {
@@ -2664,7 +2580,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .week-summary-card {
   flex: 1; /* Make cards grow equally */
   min-width: 220px; /* Minimum width to prevent too much squishing */
-  background: white;
+  background: rgba(255, 255, 255, 0.1);
   border: 1px solid #e9ecef;
   border-radius: 8px;
   padding: 10px;
@@ -2684,7 +2600,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   justify-content: space-between;
   align-items: center;
   padding: 4px 8px;
-  background: #f8f9fa;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   border: 1px solid #e9ecef;
   width: 100%; /* Ensure items use full width */
@@ -2704,10 +2620,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .aldo-panel h3,
 .marcos-panel h3,
 .otro-panel h3 {
-  color: #2c3e50;
+  color: #fff;
   margin-bottom: 10px; 
   padding-bottom: 6px; 
-  border-bottom: 1px solid #eee;
   font-size: 1em; 
   font-weight: 600;
 }
@@ -2726,11 +2641,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .week-summary-card h4 {
-  color: #2c3e50;
+  color: #fff;
   margin-bottom: 8px; 
   padding-bottom: 6px;
   border-bottom: 1px solid #eee;
-  font-size: 0.9em; 
+  font-size: 1.0em; 
   font-weight: 600;
   text-align: center;
 }
@@ -2758,22 +2673,22 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   justify-content: space-between;
   align-items: center;
   padding: 4px 8px; /* Reduced padding */
-  background: #f8f9fa;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   border: 1px solid #e9ecef;
 }
 
 .final-total-label {
-  color: #2c3e50;
-  font-weight: 500;
+  color: #fff;
+  font-weight: 600;
   font-size: 0.85em; /* Match semanas panel */
 }
 
 .final-total-value {
-  color: #34495e;
+  color: #fff;
   font-weight: 600;
-  font-size: 1.2em; /* Increased for better readability */
-  font-family: monospace;
+  font-size: 0.9em; /* Increased for better readability */
+  font-family: sans;
 }
 
 .totales-aldo .panel-header-container {
@@ -2800,13 +2715,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.85em;
-  color: #2c3e50;
-  font-weight: 500;
+  color: #fff;
+  font-weight: 600;
 }
 
 .totales-aldo .header-indicator .commission-value {
   font-weight: 700;
-  color: #3498db;
+  color: #f00;
 }
 
 .totales-aldo .header-indicator .commission-value:hover {
@@ -2816,7 +2731,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .daily-sales-card {
-  background: white;
+  background: rgba(255, 255, 255, 0.1);
   border: 1px solid #e9ecef;
   border-radius: 8px;
   padding: 12px;
@@ -2825,7 +2740,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .daily-sales-card h4 {
-  color: #2c3e50;
+  color: #fff;
   margin-bottom: 8px;
   padding-bottom: 6px;
   border-bottom: 1px solid #eee;
@@ -2844,18 +2759,18 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: #f8f9fa;
+  background: #c8b0b01c;
   border-radius: 4px;
-  border: 1px solid #e9ecef;
+  border: 0px solid #e9ecef;
   gap: 15px; /* Added gap between label/input and value */
 }
 
 .daily-sales-item.total-day {
-  background: #edf2f7;
+  background: #000;
 }
 
 .daily-sales-item .daily-sales-label {
-  color: #2c3e50;
+  color: #fff;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -2865,7 +2780,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .daily-sales-item .boleta-input {
-  width: 90px; /* Slightly wider */
+  width: 52px; /* Slightly wider */
   padding: 4px 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -2876,10 +2791,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .daily-sales-value {
-  color: #34495e;
-  font-weight: 600;
-  font-family: monospace;
-  font-size: 1.1em;
+  color: #fff;
+  font-weight: 700;
+  font-family: sans;
+  font-size: 1.0em;
 }
 
 .aldo-panel.boletas-aldo {
@@ -3313,7 +3228,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .totales-table td:first-child {
-  text-align: left;
+  text-align: center;
   padding-left: 15px;
   font-weight: 600;
 }
@@ -3836,12 +3751,4 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .tcr-modal-content h2 {
   color: white;
-}
-
-.account-balance {
-  font-family: inherit;
-  font-size: 1.2em;
-  color: rgba(255, 255, 255, 0.9);
-  white-space: nowrap;
-  font-weight: 700;
 }
