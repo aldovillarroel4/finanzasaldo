@@ -1305,13 +1305,13 @@ button:hover {
 
 .payment-date-selector {
   padding: 6px 8px !important;
-  border: 1px solid #ddd !important;
+  border: 1px solid #000 !important;
   border-radius: 4px !important;
   font-size: 0.98em !important;
   width: 130px !important; /* Reduced from 150px but still enough to show full date */
   cursor: pointer;
   transition: border-color 0.3s ease;
-  background: #9d9d9d;
+  background: #f9f9f9;
 }
 
 .payment-date-selector:hover {
@@ -1762,7 +1762,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   width: !important;
   cursor: pointer;
   transition: border-color 0.3s ease;
-  background: #868686;
+  background: #f9f9f9;
 }
 
 .date-filter-input:hover {
@@ -1965,7 +1965,7 @@ textarea {
 input[type="date"] {
   font-size: 1.1em; /* Increased from default */
   padding: 8px;
-  border: 1px solid #681e1e;
+  border: 1px solid #000;
   border-radius: 4px;
   font-family: inherit;
   -webkit-appearance: none;
