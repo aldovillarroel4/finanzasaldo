@@ -52,8 +52,8 @@ let selectedFilterDate = null;
 
 let hairdresserCommissions = {
   aldo: {
-    rec: 3,
-    com: 35,
+    rec: 0,
+    com: 100,
     ret: 14.5
   },
   marcos: {
