@@ -2676,7 +2676,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 8px; /* Reduced padding */
+  padding: 10px 18px; /* Reduced padding */
   background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   border: 0px solid #e9ecef;
