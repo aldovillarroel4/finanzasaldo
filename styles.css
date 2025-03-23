@@ -3760,3 +3760,80 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .tcr-modal-content h2 {
   color: white;
 }
+
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+
+  .summary-content {
+    grid-template-columns: 1fr;
+  }
+
+  .transactions-container {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .transaction-section,
+  .history-section {
+    height: auto;
+    margin-bottom: 20px;
+  }
+
+  .account-buttons {
+    position: static;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .add-account-btn,
+  .delete-account-btn,
+  .toggle-all-settled-btn,
+  .add-installment-btn,
+  .clear-all-btn {
+    width: 100%;
+    position: static;
+  }
+
+  .transaction-item {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 12px;
+    font-size: 1em;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    margin-bottom: 10px;
+  }
+
+  .transaction-buttons {
+    justify-content: space-between;
+  }
+
+  .total-balance {
+    position: static;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .accounts-summary {
+    min-width: auto;
+  }
+
+  .treatment-section {
+    min-width: auto;
+  }
+
+  .balance-indicators {
+    font-size: 0.8em;
+  }
+
+  .backup-dropdown,
+  .hide-btn {
+    width: 100%;
+    margin-top: 10px;
+  }
+}
+
