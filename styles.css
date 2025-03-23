@@ -549,7 +549,7 @@ button:hover {
 }
 
 .transaction-item.selected {
-  background: rgba(52, 152, 219, 0.1);
+  background: rgba(255, 245, 90, 0.21);
 }
 
 .transaction-item.settled {
@@ -1258,7 +1258,7 @@ button:hover {
 }
 
 .sale-item:hover {
-  background-color: #869eb51f;
+  background-color: rgba(255, 245, 90, 0.21);
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
@@ -1838,7 +1838,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .account-name.editable:hover {
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(240, 53, 53, 0.37);
 }
 
 .edit-account-name {
@@ -1887,6 +1887,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   gap: 3px; /* Reduced from 4px */
   flex: 1;
   min-width: 0;
+}
+
+.account-item.selected { 
+  background-color: rgba(255, 245, 90, 0.21);
 }
 
 .transaction-amount {
@@ -2225,7 +2229,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .ventas-table-row:hover {
-  background-color: #869eb51f;
+  background-color: rgba(255, 245, 90, 0.21);
 }
 
 .ventas-table-cell {
@@ -2302,7 +2306,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .marcos-content .ventas-table-row:hover {
-  background-color: #869eb51f;
+  background-color: rgba(255, 245, 90, 0.21);
 }
 
 .marcos-content .ventas-table-cell {
@@ -2364,7 +2368,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .otro-content .ventas-table-row:hover {
-  background-color: #869eb51f;
+  background-color: rgba(255, 245, 90, 0.21);
 }
 
 .otro-content .ventas-table-cell {
