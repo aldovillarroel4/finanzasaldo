@@ -3984,7 +3984,7 @@ function updateHairdresserPanels() {
   updateMarcosVentasPanel();
   updateMarcosSemanasPanel();
   updateMarcosTotalesPanel();
-  updateMarcosBoletasPanel(); 
+  updateMarcosBoletasPanel();
   updateOtroVentasPanel();
   updateOtroSemanasPanel();
   updateOtroTotalesPanel();
@@ -4479,3 +4479,154 @@ function showTCRProjection() {
 }
 
 document.getElementById('proyTCR').onclick = showTCRProjection;
+
+function generateExcelReport() {
+  // Create workbook
+  const wb = XLSX.utils.book_new();
+
+  // Generate sheets for sales data
+  const salesSheet = generateSalesSheet();
+  XLSX.utils.book_append_sheet(wb, salesSheet, "Ventas");
+
+  // Generate sheets for each hairdresser
+  const hairdressers = ['ALDO', 'MARCOS', 'OTRO'];
+  hairdressers.forEach(hairdresser => {
+    const totalsSheet = generateHairdresserTotalsSheet(hairdresser);
+    XLSX.utils.book_append_sheet(wb, totalsSheet, `Totales ${hairdresser}`);
+    
+    const weeklySheet = generateHairdresserWeeklySheet(hairdresser);
+    XLSX.utils.book_append_sheet(wb, weeklySheet, `Semanas ${hairdresser}`);
+  });
+
+  // Generate summary sheet
+  const summarySheet = generateSummarySheet();
+  XLSX.utils.book_append_sheet(wb, summarySheet, "Resumen");
+
+  // Save the file
+  const date = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, `reporte_figaro_${date}.xlsx`);
+}
+
+function generateSalesSheet() {
+  // Prepare sales data
+  const salesData = salonSales.map(sale => ({
+    'Semana': `Semana ${sale.week}`,
+    'Fecha': new Date(sale.date).toLocaleDateString(),
+    'Peluquero': sale.hairdresser,
+    'Código': sale.serviceCode,
+    'Monto': sale.amount,
+    'Tipo Pago': sale.paymentType.toUpperCase(),
+    'Comisión': sale.commission,
+    'Comisión + IVA': sale.commissionWithIVA,
+    'Monto Neto': sale.netAmount,
+    'Fecha Abono': sale.paymentDate ? new Date(sale.paymentDate).toLocaleDateString() : '',
+    'Pagado': sale.paid ? 'Sí' : 'No'
+  }));
+
+  return XLSX.utils.json_to_sheet(salesData);
+}
+
+function generateHairdresserTotalsSheet(hairdresser) {
+  const sales = salonSales.filter(sale => sale.hairdresser === hairdresser);
+  const config = hairdresserCommissions[hairdresser.toLowerCase()];
+  
+  const totalVentas = sales.reduce((sum, sale) => sum + sale.amount, 0);
+  const totalTarjeta = sales.filter(sale => 
+    sale.paymentType === 'debito' || sale.paymentType === 'credito'
+  ).reduce((sum, sale) => sum + sale.amount, 0);
+  
+  const totalPorc = sales.reduce((sum, sale) => {
+    const recAmount = (sale.paymentType === 'debito' || sale.paymentType === 'credito') ?
+      sale.amount * (config.rec / 100) : 0;
+    const comAmount = sale.amount * (config.com / 100);
+    return sum + (recAmount + comAmount);
+  }, 0);
+  
+  const retencion = totalVentas * (config.ret / 100);
+  const liquido = totalVentas - totalPorc;
+
+  const data = [
+    ['Concepto', 'Monto'],
+    ['TF Ventas', totalVentas],
+    ['TF Venta Tarjeta', totalTarjeta],
+    ['TF Porc.', totalPorc],
+    ['Retención', retencion],
+    ['Líquido', liquido]
+  ];
+
+  return XLSX.utils.aoa_to_sheet(data);
+}
+
+function generateHairdresserWeeklySheet(hairdresser) {
+  const weeks = [1, 2, 3, 4, 5];
+  const weeklyData = weeks.map(week => {
+    const weekSales = salonSales.filter(sale => 
+      sale.hairdresser === hairdresser && sale.week === week
+    );
+    
+    if (weekSales.length === 0) return null;
+
+    const totalVentas = weekSales.reduce((sum, sale) => sum + sale.amount, 0);
+    const totalTarjeta = weekSales.filter(sale => 
+      sale.paymentType === 'debito' || sale.paymentType === 'credito'
+    ).reduce((sum, sale) => sum + sale.amount, 0);
+    
+    const config = hairdresserCommissions[hairdresser.toLowerCase()];
+    const totalPorc = weekSales.reduce((sum, sale) => {
+      const recAmount = (sale.paymentType === 'debito' || sale.paymentType === 'credito') ?
+        sale.amount * (config.rec / 100) : 0;
+      const comAmount = sale.amount * (config.com / 100);
+      return sum + (recAmount + comAmount);
+    }, 0);
+
+    return {
+      'Semana': `Semana ${week}`,
+      'Total Ventas': totalVentas,
+      'Total Venta Tarjeta': totalTarjeta,
+      'Total Porc.': totalPorc,
+      'Diferencia': totalTarjeta - totalPorc
+    };
+  }).filter(data => data !== null);
+
+  return XLSX.utils.json_to_sheet(weeklyData);
+}
+
+function generateSummarySheet() {
+  // Calculate general totals
+  const totalVentas = salonSales.reduce((sum, sale) => sum + sale.amount, 0);
+  const totalTarjeta = salonSales.filter(sale => 
+    sale.paymentType === 'debito' || sale.paymentType === 'credito'
+  ).reduce((sum, sale) => sum + sale.amount, 0);
+  
+  const totalPorc = salonSales.reduce((sum, sale) => {
+    const config = hairdresserCommissions[sale.hairdresser.toLowerCase()];
+    const recAmount = (sale.paymentType === 'debito' || sale.paymentType === 'credito') ?
+      sale.amount * (config.rec / 100) : 0;
+    const comAmount = sale.amount * (config.com / 100);
+    return sum + (recAmount + comAmount);
+  }, 0);
+
+  const uniqueDays = new Set(salonSales.map(sale => 
+    new Date(sale.date).toISOString().split('T')[0]
+  ));
+  const promPorcDia = totalPorc / uniqueDays.size;
+
+  const data = [
+    ['Concepto', 'Monto'],
+    ['TF Ventas', totalVentas],
+    ['TF Venta Tarjeta', totalTarjeta],
+    ['TF Porc.', totalPorc],
+    ['Prom. Porc. Día', promPorcDia],
+    ['Días Trabajados', uniqueDays.size],
+    ['Meta Mes', figaroIndicators.metaMes || 0],
+    ['Días Hábiles Mes', figaroIndicators.diasHabilesMes || 0]
+  ];
+
+  return XLSX.utils.aoa_to_sheet(data);
+}
+
+// Add event listener for the report button
+document.addEventListener('DOMContentLoaded', () => {
+  const reportButton = document.querySelector('.figaro-year-btn');
+  reportButton.addEventListener('click', generateExcelReport);
+});
