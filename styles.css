@@ -1543,7 +1543,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   margin-bottom: -1px;
   position: sticky;
   top: 0;
-  background: #000;
+  background: #27ae60;;
   z-index: 1;
   width: 115%;
   text-align: center;
@@ -1553,11 +1553,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* Add new styles for the paid transactions total */
 .paid-transactions-total {
-  background: #000;
+  background: #27ae60;
   color: white;
   padding: 12px; 
   border-radius: 0px; 
-  margin-top: -10px;
+  margin-top: -12px;
   width: 117%;
   max-width: 300px; 
   text-align: center;
@@ -1567,15 +1567,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   z-index: 1;
 }
 
-.paid-transactions-label {
-  font-weight: 700; 
-  font-size: 0.85em; 
-  margin-bottom: 6px; 
-  color: rgba(255, 255, 255, 0.9);
-}
-
 .paid-transactions-amount {
-  font-size: 1.1em; 
+  font-size: 1.5em; 
   font-weight: 700;
   color: white;
 }

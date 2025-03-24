@@ -2324,7 +2324,6 @@ function updateTotalAbonosPanel() {
     .filter(sale => sale.paid && sale.paymentDate)
     .reduce((total, sale) => total + sale.netAmount, 0);
   paidTotalPanel.innerHTML = `
-    <div class="paid-transactions-label">Total Transacciones Pagadas:</div>
     <div class="paid-transactions-amount">${formatCurrency(totalPaidAmount)}</div>
   `;
   totalAbonosPanel.appendChild(paidTotalPanel);
