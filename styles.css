@@ -1305,17 +1305,17 @@ button:hover {
 
 .payment-date-selector {
   padding: 6px 8px !important;
-  border: 1px solid #000 !important;
+  border: 1px solid #0000 !important;
   border-radius: 4px !important;
   font-size: 0.98em !important;
   width: 130px !important; /* Reduced from 150px but still enough to show full date */
   cursor: pointer;
   transition: border-color 0.3s ease;
-  background: #f9f9f9;
+  background: #f9f9f917;
 }
 
 .payment-date-selector:hover {
-  border-color: #3498db !important;
+  border-color: #db34347d !important;
 }
 
 .payment-date-selector:focus {
@@ -1968,6 +1968,8 @@ input[type="date"] {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
+  color: white;
+  font-weight: 700;
 }
 
 /* To ensure the calendar icon stays proportional */
