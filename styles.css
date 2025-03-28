@@ -252,6 +252,8 @@ input, select {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 16px;
+  background: #f9f9f917;
+  color: white;
 }
 
 button {
@@ -307,16 +309,16 @@ button:hover {
 
 .transaction-section input,
 .transaction-section select {
-  background: rgba(255, 255, 255, 0.9);
-  border: none;
+  background: #f9f9f917;
+  border: 1px solid #ddd;
   padding: 8px;
-  color: #2c3e50;
+  color: #fff;
   font-size: 0.95em;
 }
 
 .transaction-section input:focus,
 .transaction-section select:focus {
-  background: white;
+  background: #f9f9f917;
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
 }
 
@@ -1962,14 +1964,15 @@ textarea {
 input[type="date"] {
   font-size: 1.1em; /* Increased from default */
   padding: 8px;
-  border: 1px solid #000;
+  border: 1px solid #ddd;
   border-radius: 4px;
   font-family: inherit;
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  color: #f94d4d;
+  color: white;
   font-weight: 700;
+  background: #f9f9f917;
 }
 
 /* To ensure the calendar icon stays proportional */
