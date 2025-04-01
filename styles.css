@@ -529,6 +529,7 @@ button:hover {
 .edit-transaction-amount {
   text-align: center !important;
   font-weight: bold;
+  color: black
 }
 
 .transaction-item span:nth-child(2) {
