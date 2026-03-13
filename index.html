@@ -668,16 +668,51 @@
 
     <script src="app.js"></script>
   <script>
-    // Replace label "Deuda Transbank:" -> "Pendiente P.O.S.:" in the loaded DOM
+    // Replace label "Deuda Transbank:" -> "Pendiente P.O.S.:" in the loaded DOM and keep it from reverting later
     document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('*').forEach(el => {
-        // Only replace in text nodes to avoid altering attributes or HTML structure
-        el.childNodes.forEach(node => {
-          if (node.nodeType === Node.TEXT_NODE && node.nodeValue.includes('Deuda Transbank:')) {
-            node.nodeValue = node.nodeValue.replace(/Deuda Transbank:/g, 'Pendiente P.O.S.:');
+      // Helper to replace occurrences inside text nodes of a root subtree
+      const replaceTextNodes = (root = document) => {
+        root.querySelectorAll('*').forEach(el => {
+          el.childNodes.forEach(node => {
+            if (node.nodeType === Node.TEXT_NODE && node.nodeValue && node.nodeValue.includes('Deuda Transbank:')) {
+              node.nodeValue = node.nodeValue.replace(/Deuda Transbank:/g, 'Pendiente P.O.S.:');
+            }
+          });
+        });
+      };
+
+      // Initial replacement on load
+      replaceTextNodes();
+
+      // Observe future changes to keep the label replaced if any script/button updates text
+      try {
+        const observer = new MutationObserver(mutations => {
+          for (const m of mutations) {
+            if (m.type === 'characterData' && m.target && m.target.nodeValue && m.target.nodeValue.includes('Deuda Transbank:')) {
+              m.target.nodeValue = m.target.nodeValue.replace(/Deuda Transbank:/g, 'Pendiente P.O.S.:');
+            }
+            if (m.type === 'childList' && m.addedNodes && m.addedNodes.length) {
+              m.addedNodes.forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE) {
+                  if (node.nodeValue && node.nodeValue.includes('Deuda Transbank:')) {
+                    node.nodeValue = node.nodeValue.replace(/Deuda Transbank:/g, 'Pendiente P.O.S.:');
+                  }
+                } else if (node.nodeType === Node.ELEMENT_NODE) {
+                  replaceTextNodes(node);
+                }
+              });
+            }
           }
         });
-      });
+
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+          characterData: true,
+        });
+      } catch (obsErr) {
+        console.error('MutationObserver error:', obsErr);
+      }
 
       // Persist salon "Semana" selection: save on change and restore on load
       try {
