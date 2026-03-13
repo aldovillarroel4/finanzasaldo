@@ -80,7 +80,7 @@
           <h3>DATOS EXTERNOS</h3>
           <div class="external-data-boxes">
             <div class="data-box">
-              <h4>TRANSBANK</h4>
+              <h4>P.O.S.</h4>
               <div class="data-content">
                 <p>Sin datos</p>
               </div>
@@ -667,6 +667,96 @@
     </div>
 
     <script src="app.js"></script>
+  <script>
+    // Replace label "Deuda Transbank:" -> "Pendiente P.O.S.:" in the loaded DOM
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('*').forEach(el => {
+        // Only replace in text nodes to avoid altering attributes or HTML structure
+        el.childNodes.forEach(node => {
+          if (node.nodeType === Node.TEXT_NODE && node.nodeValue.includes('Deuda Transbank:')) {
+            node.nodeValue = node.nodeValue.replace(/Deuda Transbank:/g, 'Pendiente P.O.S.:');
+          }
+        });
+      });
+
+      // Persist salon "Semana" selection: save on change and restore on load
+      try {
+        const salonWeekSelect = document.getElementById('salonWeek');
+        if (salonWeekSelect) {
+          // Restore saved value if exists
+          const savedWeek = localStorage.getItem('salonWeekLast');
+          if (savedWeek) {
+            // Only set if option exists to avoid invalid values
+            const opt = Array.from(salonWeekSelect.options).find(o => o.value === savedWeek);
+            if (opt) salonWeekSelect.value = savedWeek;
+          }
+
+          // Save whenever the user changes the selection
+          salonWeekSelect.addEventListener('change', () => {
+            localStorage.setItem('salonWeekLast', salonWeekSelect.value);
+          });
+
+          // Also save on form submit as a safeguard
+          const salonForm = document.getElementById('salonForm');
+          if (salonForm) {
+            salonForm.addEventListener('submit', () => {
+              localStorage.setItem('salonWeekLast', salonWeekSelect.value);
+            });
+          }
+        }
+      } catch (e) {
+        // Fail silently if anything goes wrong
+        console.error('Error restoring/saving salonWeek:', e);
+      }
+
+      // Ensure the "Descripción" field receives focus initially and after a transaction is registered
+      try {
+        const descriptionInput = document.getElementById('description');
+        const transactionForm = document.getElementById('transactionForm');
+
+        // Helper to focus and place cursor at end
+        const focusDescription = () => {
+          if (!descriptionInput) return;
+          descriptionInput.focus();
+          // place cursor at end for text inputs
+          const len = descriptionInput.value.length;
+          if (typeof descriptionInput.setSelectionRange === 'function') {
+            descriptionInput.setSelectionRange(len, len);
+          }
+        };
+
+        // Focus on load so cursor starts in "Descripción"
+        focusDescription();
+
+        // After the transaction form is submitted, return focus to description and clear it
+        if (transactionForm) {
+          transactionForm.addEventListener('submit', (e) => {
+            // Let existing submit handlers run; schedule focus after form processing
+            setTimeout(() => {
+              if (descriptionInput) {
+                // Clear description so new entry starts fresh (keeps cursor in the right place)
+                descriptionInput.value = '';
+                focusDescription();
+              }
+            }, 0);
+          });
+
+          // Also if user opens the calculator or navigates within the form, ensure focus returns to description
+          // When type buttons or account selects change, keep UX consistent by focusing description
+          const typeButtons = document.querySelectorAll('.type-button');
+          typeButtons.forEach(btn => btn.addEventListener('click', () => setTimeout(focusDescription, 0)));
+
+          const accountSelect = document.getElementById('account');
+          if (accountSelect) accountSelect.addEventListener('change', () => setTimeout(focusDescription, 0));
+
+          const destinationSelect = document.getElementById('destinationAccount');
+          if (destinationSelect) destinationSelect.addEventListener('change', () => setTimeout(focusDescription, 0));
+        }
+      } catch (err) {
+        console.error('Error managing description focus:', err);
+      }
+    });
+  </script>
   </div>
 </body>
 </html>
