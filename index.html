@@ -5,6 +5,65 @@
   <title>App de Finanzas</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Ensure the Porcentajes Diarios panel is slightly shorter and supports horizontal scrolling of cards */
+    .porcentajes-diarios .black-panel{
+      min-height: 160px; /* reduced height to leave more space below */
+      padding: 12px;
+      box-sizing: border-box;
+      overflow: hidden; /* hide vertical overflow */
+      width: 100%;
+      margin-top: 8px; /* ensure panel sits below the title */
+    }
+
+    /* Align the panel title to the top-left like other panels */
+    .porcentajes-diarios > h2 {
+      text-align: left;
+      margin: 0;
+      padding: 0;
+      align-self: flex-start;
+      font-weight: 600;
+    }
+
+    /* Ensure section stacks title above panel (defensive in case parent uses flex) */
+    .porcentajes-diarios {
+      display: block;
+    }
+
+    /* Arrange day cards horizontally and allow left-right scrolling */
+    .porcentajes-daily-container{
+      display:flex;
+      flex-direction:row; /* place cards in a row */
+      flex-wrap:nowrap;
+      gap:10px;
+      align-items:flex-start;
+      padding:8px;
+      overflow-x:auto; /* enable horizontal scroll */
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+
+    /* Ensure each card has a consistent width and is inline for horizontal flow */
+    .porc-daily-card{
+      display:inline-block;
+      min-width:180px;
+      max-width:260px;
+      box-sizing:border-box;
+      margin:0;
+      background:#111;
+      color:#fff;
+      padding:10px;
+      border-radius:8px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.25);
+      flex: 0 0 auto;
+    }
+
+    /* Responsive constraint for small viewports */
+    @media (max-width:600px){
+      .porcentajes-diarios .black-panel{ min-height:140px; }
+      .porc-daily-card{ min-width:150px; max-width:220px; border-radius:6px; }
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -379,6 +438,15 @@
         <!-- Content will be added dynamically -->
       </div>
     </div>
+
+    <!-- Nuevo panel: Porcentajes Diarios (mismo aspecto que PELUQUEROS) -->
+    <section class="figaro-header porcentajes-diarios">
+      <h2>Porcentajes Diarios</h2>
+      <div class="black-panel" id="porcentajesDiariosPanel">
+        <!-- Daily percentage summary cards will be injected here -->
+        <div id="porcentajesDailyContainer" class="porcentajes-daily-container"></div>
+      </div>
+    </section>
 
     <!-- Sección de registro de ventas y historial -->
     <div class="salon-section">
@@ -791,6 +859,342 @@
         console.error('Error managing description focus:', err);
       }
     });
+
+    // --- START: Daily porcentajes summary script ---
+    (function() {
+      const css = `
+        .porcentajes-daily-container{display:flex;flex-direction:row;flex-wrap:nowrap;gap:10px;padding:12px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+        .porc-daily-card{display:inline-block;background:#111;color:#fff;padding:10px;border-radius:8px;min-width:180px;max-width:260px;box-shadow:0 2px 6px rgba(0,0,0,0.25);flex:0 0 auto;margin:0}
+        .porc-daily-card h4{margin:0 0 8px 0;font-size:13px;font-weight:600}
+        .porc-daily-row{display:flex;justify-content:space-between;font-size:13px;margin:4px 0}
+        .porc-daily-label{opacity:0.9}
+        .porc-daily-value{font-weight:700}
+        .porc-daily-total{margin-top:8px;border-top:1px solid rgba(255,255,255,0.08);padding-top:6px;font-weight:800;color:#f1c40f}
+      `;
+      const styleEl = document.createElement('style'); styleEl.textContent = css; document.head.appendChild(styleEl);
+
+      function parseNumber(text){
+        if(!text) return 0;
+        const cleaned = String(text).replace(/\s/g,'').replace(/\$/g,'').replace(/%/g,'').replace(/\./g,'').replace(/,/g,'.');
+        const n = parseFloat(cleaned);
+        return isNaN(n) ? 0 : n;
+      }
+
+      function getVentasRows(panelSelector){
+        const container = document.querySelector(panelSelector + ' .ventas-table');
+        if(!container) return [];
+        return Array.from(container.children).filter(child => !child.classList.contains('ventas-table-header'));
+      }
+
+      function extractPercentByDate(panelSelector){
+        const rows = getVentasRows(panelSelector);
+        const items = [];
+        rows.forEach(row => {
+          const cells = Array.from(row.querySelectorAll('.ventas-table-cell'));
+          if(cells.length < 2) return;
+          const dateText = cells[1].textContent.trim();
+          const lastCell = cells[cells.length - 1];
+          const value = parseNumber(lastCell ? lastCell.textContent : '0');
+          if(value && dateText) items.push({date: dateText, value});
+        });
+        return items;
+      }
+
+      function buildDailyCards(){
+        const container = document.getElementById('porcentajesDailyContainer');
+        if(!container) return;
+        const map = new Map();
+
+        const sources = [
+          {panel: '.ventas-aldo', key: 'Aldo'},
+          {panel: '.ventas-marcos', key: 'Marcos'},
+          {panel: '.ventas-otro', key: 'Otro'},
+        ];
+
+        sources.forEach(src => {
+          const items = extractPercentByDate(src.panel);
+          items.forEach(it => {
+            const key = it.date;
+            if(!map.has(key)) map.set(key, {});
+            const entry = map.get(key);
+            entry[src.key] = (entry[src.key] || 0) + it.value;
+            map.set(key, entry);
+          });
+        });
+
+        // helper: parse date string into a Date object if possible (handles ISO yyyy-mm-dd and dd/mm/yyyy)
+        // Parse explicitly to local date parts to avoid timezone offsets that can shift weekdays.
+        function parseDateString(s){
+          if(!s || typeof s !== 'string') return null;
+          s = s.trim();
+          // Try ISO yyyy-mm-dd or yyyy/mm/dd (explicit local construction)
+          const isoMatch = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+          if(isoMatch){
+            const year = parseInt(isoMatch[1],10);
+            const month = parseInt(isoMatch[2],10) - 1;
+            const day = parseInt(isoMatch[3],10);
+            const d = new Date(year, month, day); // local date, avoids UTC shift
+            return isNaN(d) ? null : d;
+          }
+          // Try dd/mm/yyyy or d/m/yyyy
+          const dm = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+          if(dm){
+            let day = parseInt(dm[1],10), month = parseInt(dm[2],10)-1, year = parseInt(dm[3],10);
+            if(year < 100) year += 2000;
+            const d = new Date(year, month, day); // local date
+            return isNaN(d) ? null : d;
+          }
+          // Fallback: attempt Date parse but don't rely on it for weekday
+          const fallback = new Date(s);
+          return isNaN(fallback) ? null : fallback;
+        }
+
+        const weekdayNames = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+
+        container.innerHTML = '';
+        const keys = Array.from(map.keys()).sort();
+        keys.forEach(dateKey => {
+          const entry = map.get(dateKey);
+          const card = document.createElement('div');
+          card.className = 'porc-daily-card';
+          const title = document.createElement('h4');
+
+          // Determine weekday prefix if possible
+          const parsed = parseDateString(dateKey);
+          if(parsed){
+            const weekday = weekdayNames[parsed.getDay()] || '';
+            title.textContent = weekday + ' ' + dateKey;
+          } else {
+            // fallback: show original dateKey
+            title.textContent = dateKey;
+          }
+
+          card.appendChild(title);
+
+          let dayTotal = 0;
+          ['Aldo','Marcos','Otro'].forEach(name => {
+            if(entry[name]){
+              dayTotal += entry[name];
+              const row = document.createElement('div');
+              row.className = 'porc-daily-row';
+              const label = document.createElement('div');
+              label.className = 'porc-daily-label';
+              label.textContent = name;
+              const val = document.createElement('div');
+              val.className = 'porc-daily-value';
+              // Format number and prefix with $ to match other panels
+              val.textContent = '$' + (Math.round(entry[name] * 100) / 100).toLocaleString();
+              row.appendChild(label);
+              row.appendChild(val);
+              card.appendChild(row);
+            }
+          });
+
+          // Append final total row for the day if any values exist
+          if(dayTotal > 0){
+            const totalRow = document.createElement('div');
+            totalRow.className = 'porc-daily-row porc-daily-total';
+            const totalLabel = document.createElement('div');
+            totalLabel.className = 'porc-daily-label';
+            totalLabel.textContent = 'Total';
+            const totalVal = document.createElement('div');
+            totalVal.className = 'porc-daily-value';
+            totalVal.textContent = '$' + (Math.round(dayTotal * 100) / 100).toLocaleString();
+            totalRow.appendChild(totalLabel);
+            totalRow.appendChild(totalVal);
+            card.appendChild(totalRow);
+          }
+
+          container.appendChild(card);
+        });
+
+        if(map.size === 0){
+          container.innerHTML = '<div style="color:#999;padding:10px">No hay porcentajes diarios todavía</div>';
+        }
+      }
+
+      function observeVentas(){
+        const targets = [
+          document.querySelector('.ventas-aldo .ventas-table'),
+          document.querySelector('.ventas-marcos .ventas-table'),
+          document.querySelector('.ventas-otro .ventas-table'),
+        ].filter(Boolean);
+
+        if(targets.length === 0){
+          setTimeout(() => { observeVentas(); buildDailyCards(); }, 500);
+          return;
+        }
+
+        const observer = new MutationObserver(() => buildDailyCards());
+        targets.forEach(t => observer.observe(t, {childList:true, subtree:true, characterData:true}));
+        buildDailyCards();
+      }
+
+      if(document.readyState === 'loading'){
+        document.addEventListener('DOMContentLoaded', observeVentas);
+      } else {
+        observeVentas();
+      }
+    })();
+    // --- END: Daily porcentajes summary script ---
+
+  </script>
+
+  <script>
+    // Prepend weekday name to dates inside the "Total Abonos" panel.
+    (function(){
+      const weekdayNames = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+
+      function parseDateStringToLocal(s){
+        if(!s || typeof s !== 'string') return null;
+        s = s.trim();
+        const iso = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+        if(iso){
+          const y = parseInt(iso[1],10), m = parseInt(iso[2],10)-1, d = parseInt(iso[3],10);
+          const date = new Date(y,m,d);
+          return isNaN(date) ? null : date;
+        }
+        const dm = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+        if(dm){
+          let day = parseInt(dm[1],10), month = parseInt(dm[2],10)-1, year = parseInt(dm[3],10);
+          if(year < 100) year += 2000;
+          const date = new Date(year, month, day);
+          return isNaN(date) ? null : date;
+        }
+        const fallback = new Date(s);
+        return isNaN(fallback) ? null : fallback;
+      }
+
+      // Finds text nodes under container and replaces date text by prefixing weekday if not present
+      function processContainer(container){
+        if(!container) return;
+        const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+        const texts = [];
+        while(walker.nextNode()){
+          texts.push(walker.currentNode);
+        }
+        texts.forEach(node => {
+          const txt = node.nodeValue.trim();
+          if(!txt) return;
+          // Avoid touching nodes that already start with a weekday word
+          if(/^(Domingo|Lunes|Martes|Mi[eé]rcoles|Jueves|Viernes|S[áa]bado)\b/.test(txt)) return;
+
+          // Try to find a date-like substring (ISO or dd/mm/yyyy)
+          const dateMatch = txt.match(/(\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})|(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/);
+          if(dateMatch){
+            const dateStr = dateMatch[0];
+            const parsed = parseDateStringToLocal(dateStr);
+            if(parsed){
+              const weekday = weekdayNames[parsed.getDay()];
+              const newText = txt.replace(dateStr, weekday + ' ' + dateStr);
+              node.nodeValue = newText;
+            }
+          }
+        });
+      }
+
+      function observeTotalAbonos(){
+        const panel = document.querySelector('.total-abonos-panel');
+        if(!panel) return;
+        // Initial pass
+        processContainer(panel);
+
+        // Observe for changes inside panel
+        const mo = new MutationObserver((mutations) => {
+          // Delay slightly to allow inserted nodes to settle
+          setTimeout(() => processContainer(panel), 10);
+        });
+        mo.observe(panel, {childList:true, subtree:true, characterData:true});
+      }
+
+      if(document.readyState === 'loading'){
+        document.addEventListener('DOMContentLoaded', observeTotalAbonos);
+      } else {
+        observeTotalAbonos();
+      }
+    })();
+  </script>
+
+  <script>
+    // Prepend weekday name to dates inside the "Boletas" panels (Aldo, Marcos, Otro)
+    (function(){
+      const weekdayNames = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+
+      function parseDateStringToLocal(s){
+        if(!s || typeof s !== 'string') return null;
+        s = s.trim();
+        const iso = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+        if(iso){
+          const y = parseInt(iso[1],10), m = parseInt(iso[2],10)-1, d = parseInt(iso[3],10);
+          const date = new Date(y,m,d);
+          return isNaN(date) ? null : date;
+        }
+        const dm = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+        if(dm){
+          let day = parseInt(dm[1],10), month = parseInt(dm[2],10)-1, year = parseInt(dm[3],10);
+          if(year < 100) year += 2000;
+          const date = new Date(year, month, day);
+          return isNaN(date) ? null : date;
+        }
+        const fallback = new Date(s);
+        return isNaN(fallback) ? null : fallback;
+      }
+
+      // Finds text nodes under container and replaces date text by prefixing weekday if not present
+      function processContainer(container){
+        if(!container) return;
+        const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+        const texts = [];
+        while(walker.nextNode()){
+          texts.push(walker.currentNode);
+        }
+        texts.forEach(node => {
+          const txt = node.nodeValue.trim();
+          if(!txt) return;
+          // Avoid touching nodes that already start with a weekday word
+          if(/^(Domingo|Lunes|Martes|Mi[eé]rcoles|Jueves|Viernes|S[áa]bado)\b/.test(txt)) return;
+
+          // Try to find a date-like substring (ISO or dd/mm/yyyy)
+          const dateMatch = txt.match(/(\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})|(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/);
+          if(dateMatch){
+            const dateStr = dateMatch[0];
+            const parsed = parseDateStringToLocal(dateStr);
+            if(parsed){
+              const weekday = weekdayNames[parsed.getDay()];
+              const newText = txt.replace(dateStr, weekday + ' ' + dateStr);
+              node.nodeValue = newText;
+            }
+          }
+        });
+      }
+
+      function observeBoletas(){
+        const selectors = ['.boletas-aldo', '.boletas-marcos', '.boletas-otro'];
+        const panels = selectors.map(s => document.querySelector(s)).filter(Boolean);
+        if(panels.length === 0){
+          // Try again shortly if panels not yet present
+          setTimeout(observeBoletas, 500);
+          return;
+        }
+
+        panels.forEach(panel => {
+          // initial pass
+          processContainer(panel);
+
+          // observe for changes inside panel
+          const mo = new MutationObserver(() => {
+            setTimeout(() => processContainer(panel), 10);
+          });
+          mo.observe(panel, {childList:true, subtree:true, characterData:true});
+        });
+      }
+
+      if(document.readyState === 'loading'){
+        document.addEventListener('DOMContentLoaded', observeBoletas);
+      } else {
+        observeBoletas();
+      }
+    })();
   </script>
   </div>
 </body>
