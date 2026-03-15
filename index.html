@@ -1065,7 +1065,7 @@
         return isNaN(fallback) ? null : fallback;
       }
 
-      // Finds text nodes under container and replaces date text by prefixing weekday if not present
+      // Finds text nodes under container and replaces date text by prefixing weekday if not present (idempotent)
       function processContainer(container){
         if(!container) return;
         const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
@@ -1073,23 +1073,36 @@
         while(walker.nextNode()){
           texts.push(walker.currentNode);
         }
-        texts.forEach(node => {
-          const txt = node.nodeValue.trim();
-          if(!txt) return;
-          // Avoid touching nodes that already start with a weekday word
-          if(/^(Domingo|Lunes|Martes|Mi[eé]rcoles|Jueves|Viernes|S[áa]bado)\b/.test(txt)) return;
 
-          // Try to find a date-like substring (ISO or dd/mm/yyyy)
-          const dateMatch = txt.match(/(\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})|(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/);
-          if(dateMatch){
-            const dateStr = dateMatch[0];
-            const parsed = parseDateStringToLocal(dateStr);
-            if(parsed){
-              const weekday = weekdayNames[parsed.getDay()];
-              const newText = txt.replace(dateStr, weekday + ' ' + dateStr);
-              node.nodeValue = newText;
-            }
+        // global regex to find date-like substrings and weekday-before check
+        const dateRegex = /(\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})|(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/g;
+        const weekdayBeforeRegex = /(Domingo|Lunes|Martes|Mi[eé]rcoles|Jueves|Viernes|S[áa]bado)\s*$/;
+
+        texts.forEach(node => {
+          let txt = node.nodeValue;
+          if(!txt || !dateRegex.test(txt)) return;
+
+          // collect matches (so replacements from end won't shift indices)
+          dateRegex.lastIndex = 0;
+          const matches = [];
+          let m;
+          while((m = dateRegex.exec(txt)) !== null){
+            matches.push({match: m[0], index: m.index});
           }
+          if(matches.length === 0) return;
+
+          for(let i = matches.length - 1; i >= 0; i--){
+            const {match: dateStr, index} = matches[i];
+            const lookback = txt.slice(Math.max(0, index - 20), index);
+            if(weekdayBeforeRegex.test(lookback)) continue; // already has weekday prefix
+
+            const parsed = parseDateStringToLocal(dateStr);
+            if(!parsed) continue;
+            const weekday = weekdayNames[parsed.getDay()];
+            txt = txt.slice(0, index) + (weekday + ' ' + dateStr) + txt.slice(index + dateStr.length);
+          }
+
+          if(txt !== node.nodeValue) node.nodeValue = txt;
         });
       }
 
@@ -1140,7 +1153,7 @@
         return isNaN(fallback) ? null : fallback;
       }
 
-      // Finds text nodes under container and replaces date text by prefixing weekday if not present
+      // Finds text nodes under container and replaces date text by prefixing weekday if not present (idempotent)
       function processContainer(container){
         if(!container) return;
         const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
@@ -1148,23 +1161,36 @@
         while(walker.nextNode()){
           texts.push(walker.currentNode);
         }
-        texts.forEach(node => {
-          const txt = node.nodeValue.trim();
-          if(!txt) return;
-          // Avoid touching nodes that already start with a weekday word
-          if(/^(Domingo|Lunes|Martes|Mi[eé]rcoles|Jueves|Viernes|S[áa]bado)\b/.test(txt)) return;
 
-          // Try to find a date-like substring (ISO or dd/mm/yyyy)
-          const dateMatch = txt.match(/(\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})|(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/);
-          if(dateMatch){
-            const dateStr = dateMatch[0];
-            const parsed = parseDateStringToLocal(dateStr);
-            if(parsed){
-              const weekday = weekdayNames[parsed.getDay()];
-              const newText = txt.replace(dateStr, weekday + ' ' + dateStr);
-              node.nodeValue = newText;
-            }
+        // global regex to find date-like substrings and weekday-before check
+        const dateRegex = /(\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})|(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/g;
+        const weekdayBeforeRegex = /(Domingo|Lunes|Martes|Mi[eé]rcoles|Jueves|Viernes|S[áa]bado)\s*$/;
+
+        texts.forEach(node => {
+          let txt = node.nodeValue;
+          if(!txt || !dateRegex.test(txt)) return;
+
+          // collect matches (so replacements from end won't shift indices)
+          dateRegex.lastIndex = 0;
+          const matches = [];
+          let m;
+          while((m = dateRegex.exec(txt)) !== null){
+            matches.push({match: m[0], index: m.index});
           }
+          if(matches.length === 0) return;
+
+          for(let i = matches.length - 1; i >= 0; i--){
+            const {match: dateStr, index} = matches[i];
+            const lookback = txt.slice(Math.max(0, index - 20), index);
+            if(weekdayBeforeRegex.test(lookback)) continue; // already has weekday prefix
+
+            const parsed = parseDateStringToLocal(dateStr);
+            if(!parsed) continue;
+            const weekday = weekdayNames[parsed.getDay()];
+            txt = txt.slice(0, index) + (weekday + ' ' + dateStr) + txt.slice(index + dateStr.length);
+          }
+
+          if(txt !== node.nodeValue) node.nodeValue = txt;
         });
       }
 
