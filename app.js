@@ -26,22 +26,6 @@ let accounts = {
   }
 };
 
-// Safe replace helper to avoid NotFoundError when blur/other handlers remove nodes before replaceWith runs
-function safeReplaceWith(oldEl, newEl){
-  try {
-    // try native replaceWith first
-    oldEl.replaceWith(newEl);
-  } catch (err) {
-    // fallback to replaceChild if oldEl is no longer attached the way replaceWith expects
-    if (oldEl && oldEl.parentNode) {
-      try { oldEl.parentNode.replaceChild(newEl, oldEl); } catch(e) { /* swallow */ }
-    } else {
-      // as last resort try to insert newEl where possible
-      if (document.body && !newEl.isConnected) document.body.appendChild(newEl);
-    }
-  }
-}
-
 let selectedAccount = null;
 let transactions = [];
 let selectedTransactionId = null;
@@ -345,7 +329,7 @@ function makeAccountNameEditable(accountElement, accountKey) {
     const newNameElement = document.createElement('span');
     newNameElement.className = 'account-name editable';
     newNameElement.textContent = newName || currentName;
-    safeReplaceWith(input, newNameElement);
+    input.replaceWith(newNameElement);
     
     newNameElement.addEventListener('dblclick', () => {
       makeAccountNameEditable(accountElement, newName.toLowerCase() || accountKey);
@@ -678,7 +662,7 @@ function makeTransactionFieldEditable(transactionElement, transactionId, fieldTy
   input.style.border = '1px solid #3498db';
   input.style.borderRadius = '4px';
   
-  safeReplaceWith(fieldSpan, input);
+  fieldSpan.replaceWith(input);
   input.focus();
 
   function saveEdit() {
@@ -713,7 +697,7 @@ function makeTransactionFieldEditable(transactionElement, transactionId, fieldTy
     const newSpan = document.createElement('span');
     newSpan.className = `transaction-${fieldType} editable`;
     newSpan.textContent = fieldType === 'amount' ? formatCurrency(parseFloat(newValue)) : (newValue || currentValue);
-    safeReplaceWith(input, newSpan);
+    input.replaceWith(newSpan);
     
     newSpan.addEventListener('dblclick', () => {
       makeTransactionFieldEditable(transactionElement, transactionId, fieldType);
@@ -3162,7 +3146,7 @@ function editCommissionValue(e) {
       revertSpan.dataset.hairdresser = hairdresser;
       revertSpan.textContent = hairdresserCommissions[hairdresser][type] + '%';
       revertSpan.addEventListener('dblclick', editCommissionValue);
-      safeReplaceWith(input, revertSpan);
+      input.replaceWith(revertSpan);
     }
   }
 
@@ -4280,7 +4264,7 @@ function makeIndicatorEditable(element, fieldName, type) {
       formatCurrency(figaroIndicators[fieldName] || 0) : 
       (figaroIndicators[fieldName] || 'Click para editar');
     
-    safeReplaceWith(input, span);
+    input.replaceWith(span);
     
     span.addEventListener('dblclick', (e) => {
       makeIndicatorEditable(e.target, fieldName, type);
@@ -4495,193 +4479,6 @@ function showTCRProjection() {
 }
 
 document.getElementById('proyTCR').onclick = showTCRProjection;
-
-// Totales TCR modal logic
-(function(){
-  const totalesBtn = document.getElementById('totalesTCR');
-  const modal = document.getElementById('totalesTCRModal');
-  const closeBtn = modal?.querySelector('.totales-tcr-close');
-  const listContainer = document.getElementById('totalesTCRList');
-
-  function buildTotalesTCRList(){
-    if(!listContainer) return;
-    listContainer.innerHTML = '';
-    const entries = Object.entries(accounts)
-      .filter(([key, acc]) => acc.treatment === 'pasivos' && acc.type === 'credito');
-
-    if(entries.length === 0){
-      listContainer.innerHTML = '<div class="totales-empty">No se encontraron cuentas de tipo Tarjeta de Crédito en pasivos.</div>';
-      return;
-    }
-
-    const ul = document.createElement('div');
-    ul.className = 'totales-tcr-items';
-    entries.forEach(([key, acc]) => {
-      // Ensure there's a stored cupo total field
-      if (acc.tcrLimit === undefined || acc.tcrLimit === null) {
-        // default to 0 if not present
-        acc.tcrLimit = 0;
-      }
-
-      // Compute Cupo Utilizado by summing all transactions for this account,
-      // counting for each transaction the number of remaining installments (including current).
-      const usedSum = transactions
-        .filter(t => t.account === key)
-        .reduce((sum, t) => {
-          const amt = Math.abs(Number(t.amount || 0));
-          // Determine remaining installments: if totalInstallments present and >1 use that, otherwise 1
-          const totalInst = Number(t.totalInstallments) || 1;
-          const currentInst = Number(t.currentInstallment) || 1;
-          const remaining = Math.max(1, totalInst - currentInst + 1);
-          return sum + (amt * remaining);
-        }, 0);
-
-      const limitNum = Number(acc.tcrLimit || 0);
-      const disponible = limitNum - usedSum;
-
-      const row = document.createElement('div');
-      row.className = 'totales-tcr-item';
-
-      row.innerHTML = `
-        <div style="display:flex;flex-direction:column;gap:6px;width:60%;">
-          <div class="totales-tcr-name" title="${key}">${acc.displayName || key}</div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <label style="font-size:0.85em;color:#ccc;min-width:88px;">Cupo Total:</label>
-            <input class="tcr-cupo-input" data-account="${key}" value="${formatCurrency(limitNum)}" style="width:120px;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:white;text-align:right;">
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;width:40%;">
-          <div style="font-size:1em;color:#fff;">Cupo Disponible: <strong class="tcr-disponible" data-account="${key}" data-raw="${disponible}" style="margin-left:6px;">${formatCurrency(disponible)}</strong></div>
-          <div style="font-size:0.95em;color:#fff;">Cupo Utilizado: <strong class="tcr-utilizado" data-account="${key}" style="margin-left:6px;">${formatCurrency(usedSum)}</strong></div>
-        </div>
-      `;
-
-      ul.appendChild(row);
-
-      // apply positive/negative class based on disponible value
-      try {
-        const dispoEl = row.querySelector(`.tcr-disponible[data-account="${key}"]`);
-        if (dispoEl) {
-          if (Number(disponible) < 0) {
-            dispoEl.classList.add('negative');
-            dispoEl.classList.remove('positive');
-          } else {
-            dispoEl.classList.add('positive');
-            dispoEl.classList.remove('negative');
-          }
-          // ensure displayed formatted value is consistent
-          dispoEl.textContent = formatCurrency(disponible);
-        }
-      } catch (err) {
-        // ignore any DOM timing issues
-      }
-    });
-    listContainer.appendChild(ul);
-
-    // Add event listeners for inputs (accept/display currency formatted values)
-    listContainer.querySelectorAll('.tcr-cupo-input').forEach(input => {
-      input.addEventListener('change', (e) => {
-        const accountKey = e.target.dataset.account;
-        // Parse formatted currency string back to number
-        const raw = e.target.value || '';
-        const cleaned = String(raw).replace(/\s/g,'').replace(/\$/g,'').replace(/CLP/g,'').replace(/,/g,'').replace(/\./g,'');
-        // cleaned may be like "123456" or include decimal separator if user typed dot/comma; attempt robust parse:
-        let numeric = parseFloat(raw.toString().replace(/[^0-9\-,\.]/g, '').replace(/\./g, '').replace(/,/g, '.'));
-        if (isNaN(numeric)) {
-          // fallback to integer extraction
-          numeric = parseFloat(cleaned) || 0;
-        }
-        if (numeric < 0) numeric = 0;
-        // store on account object
-        if (!accounts[accountKey]) accounts[accountKey] = {};
-        accounts[accountKey].tcrLimit = numeric;
-        // Update displayed disponible for this account based on recalculated used sum
-        const dispoEl = listContainer.querySelector(`.tcr-disponible[data-account="${accountKey}"]`);
-        const utilizadoEl = listContainer.querySelector(`.tcr-utilizado[data-account="${accountKey}"]`);
-        const used = transactions
-          .filter(t => t.account === accountKey)
-          .reduce((sum, t) => {
-            const amt = Math.abs(Number(t.amount || 0));
-            const totalInst = Number(t.totalInstallments) || 1;
-            const currentInst = Number(t.currentInstallment) || 1;
-            const remaining = Math.max(1, totalInst - currentInst + 1);
-            return sum + (amt * remaining);
-          }, 0);
-        const disp = accounts[accountKey].tcrLimit - used;
-        if (dispoEl) dispoEl.textContent = formatCurrency(disp);
-        if (utilizadoEl) utilizadoEl.textContent = formatCurrency(used);
-        // Rewrite the input value to a consistent currency format
-        e.target.value = formatCurrency(accounts[accountKey].tcrLimit);
-        // persist and refresh lists elsewhere
-        saveToLocalStorage();
-      });
-
-      // allow Enter key to blur and trigger change, and keep currency formatting on blur
-      input.addEventListener('keypress', (ev) => {
-        if (ev.key === 'Enter') {
-          ev.preventDefault();
-          input.blur();
-        }
-      });
-
-      input.addEventListener('blur', (ev) => {
-        // ensure currency formatting on blur even if user didn't change (keeps consistent display)
-        const accountKey = ev.target.dataset.account;
-        const val = accounts[accountKey] && accounts[accountKey].tcrLimit ? accounts[accountKey].tcrLimit : 0;
-        ev.target.value = formatCurrency(Number(val || 0));
-      });
-
-      // on focus show raw number for easier editing
-      input.addEventListener('focus', (ev) => {
-        const accountKey = ev.target.dataset.account;
-        const val = accounts[accountKey] && accounts[accountKey].tcrLimit ? accounts[accountKey].tcrLimit : 0;
-        ev.target.value = val || '';
-      });
-    });
-  }
-
-  function showTotalesModal(){
-    buildTotalesTCRList();
-    if(modal){
-      modal.style.display = 'block';
-      modal.setAttribute('aria-hidden','false');
-    }
-  }
-
-  function hideTotalesModal(){
-    if(modal){
-      modal.style.display = 'none';
-      modal.setAttribute('aria-hidden','true');
-    }
-  }
-
-  if(totalesBtn){
-    totalesBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      showTotalesModal();
-    });
-  }
-
-  if(closeBtn){
-    closeBtn.addEventListener('click', hideTotalesModal);
-  }
-
-  window.addEventListener('click', (e) => {
-    if(e.target === modal){
-      hideTotalesModal();
-    }
-  });
-
-  // Rebuild list when accounts change by wrapping saveToLocalStorage to also update view
-  const originalSave = saveToLocalStorage;
-  window.saveToLocalStorage = function(){
-    originalSave();
-    // if modal open, refresh content
-    if(modal && modal.style.display === 'block'){
-      buildTotalesTCRList();
-    }
-  };
-})();
 
 function generateExcelReport() {
   // Create workbook
