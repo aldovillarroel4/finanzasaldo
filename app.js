@@ -26,6 +26,22 @@ let accounts = {
   }
 };
 
+// Safe replace helper to avoid NotFoundError when blur/other handlers remove nodes before replaceWith runs
+function safeReplaceWith(oldEl, newEl){
+  try {
+    // try native replaceWith first
+    oldEl.replaceWith(newEl);
+  } catch (err) {
+    // fallback to replaceChild if oldEl is no longer attached the way replaceWith expects
+    if (oldEl && oldEl.parentNode) {
+      try { oldEl.parentNode.replaceChild(newEl, oldEl); } catch(e) { /* swallow */ }
+    } else {
+      // as last resort try to insert newEl where possible
+      if (document.body && !newEl.isConnected) document.body.appendChild(newEl);
+    }
+  }
+}
+
 let selectedAccount = null;
 let transactions = [];
 let selectedTransactionId = null;
@@ -329,7 +345,7 @@ function makeAccountNameEditable(accountElement, accountKey) {
     const newNameElement = document.createElement('span');
     newNameElement.className = 'account-name editable';
     newNameElement.textContent = newName || currentName;
-    input.replaceWith(newNameElement);
+    safeReplaceWith(input, newNameElement);
     
     newNameElement.addEventListener('dblclick', () => {
       makeAccountNameEditable(accountElement, newName.toLowerCase() || accountKey);
@@ -662,7 +678,7 @@ function makeTransactionFieldEditable(transactionElement, transactionId, fieldTy
   input.style.border = '1px solid #3498db';
   input.style.borderRadius = '4px';
   
-  fieldSpan.replaceWith(input);
+  safeReplaceWith(fieldSpan, input);
   input.focus();
 
   function saveEdit() {
@@ -697,7 +713,7 @@ function makeTransactionFieldEditable(transactionElement, transactionId, fieldTy
     const newSpan = document.createElement('span');
     newSpan.className = `transaction-${fieldType} editable`;
     newSpan.textContent = fieldType === 'amount' ? formatCurrency(parseFloat(newValue)) : (newValue || currentValue);
-    input.replaceWith(newSpan);
+    safeReplaceWith(input, newSpan);
     
     newSpan.addEventListener('dblclick', () => {
       makeTransactionFieldEditable(transactionElement, transactionId, fieldType);
@@ -3146,7 +3162,7 @@ function editCommissionValue(e) {
       revertSpan.dataset.hairdresser = hairdresser;
       revertSpan.textContent = hairdresserCommissions[hairdresser][type] + '%';
       revertSpan.addEventListener('dblclick', editCommissionValue);
-      input.replaceWith(revertSpan);
+      safeReplaceWith(input, revertSpan);
     }
   }
 
@@ -4264,7 +4280,7 @@ function makeIndicatorEditable(element, fieldName, type) {
       formatCurrency(figaroIndicators[fieldName] || 0) : 
       (figaroIndicators[fieldName] || 'Click para editar');
     
-    input.replaceWith(span);
+    safeReplaceWith(input, span);
     
     span.addEventListener('dblclick', (e) => {
       makeIndicatorEditable(e.target, fieldName, type);
@@ -4480,6 +4496,193 @@ function showTCRProjection() {
 
 document.getElementById('proyTCR').onclick = showTCRProjection;
 
+// Totales TCR modal logic
+(function(){
+  const totalesBtn = document.getElementById('totalesTCR');
+  const modal = document.getElementById('totalesTCRModal');
+  const closeBtn = modal?.querySelector('.totales-tcr-close');
+  const listContainer = document.getElementById('totalesTCRList');
+
+  function buildTotalesTCRList(){
+    if(!listContainer) return;
+    listContainer.innerHTML = '';
+    const entries = Object.entries(accounts)
+      .filter(([key, acc]) => acc.treatment === 'pasivos' && acc.type === 'credito');
+
+    if(entries.length === 0){
+      listContainer.innerHTML = '<div class="totales-empty">No se encontraron cuentas de tipo Tarjeta de Crédito en pasivos.</div>';
+      return;
+    }
+
+    const ul = document.createElement('div');
+    ul.className = 'totales-tcr-items';
+    entries.forEach(([key, acc]) => {
+      // Ensure there's a stored cupo total field
+      if (acc.tcrLimit === undefined || acc.tcrLimit === null) {
+        // default to 0 if not present
+        acc.tcrLimit = 0;
+      }
+
+      // Compute Cupo Utilizado by summing all transactions for this account,
+      // counting for each transaction the number of remaining installments (including current).
+      const usedSum = transactions
+        .filter(t => t.account === key)
+        .reduce((sum, t) => {
+          const amt = Math.abs(Number(t.amount || 0));
+          // Determine remaining installments: if totalInstallments present and >1 use that, otherwise 1
+          const totalInst = Number(t.totalInstallments) || 1;
+          const currentInst = Number(t.currentInstallment) || 1;
+          const remaining = Math.max(1, totalInst - currentInst + 1);
+          return sum + (amt * remaining);
+        }, 0);
+
+      const limitNum = Number(acc.tcrLimit || 0);
+      const disponible = limitNum - usedSum;
+
+      const row = document.createElement('div');
+      row.className = 'totales-tcr-item';
+
+      row.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:6px;width:60%;">
+          <div class="totales-tcr-name" title="${key}">${acc.displayName || key}</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <label style="font-size:0.85em;color:#ccc;min-width:88px;">Cupo Total:</label>
+            <input class="tcr-cupo-input" data-account="${key}" value="${formatCurrency(limitNum)}" style="width:120px;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:white;text-align:right;">
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;width:40%;">
+          <div style="font-size:1em;color:#fff;">Cupo Disponible: <strong class="tcr-disponible" data-account="${key}" data-raw="${disponible}" style="margin-left:6px;">${formatCurrency(disponible)}</strong></div>
+          <div style="font-size:0.95em;color:#fff;">Cupo Utilizado: <strong class="tcr-utilizado" data-account="${key}" style="margin-left:6px;">${formatCurrency(usedSum)}</strong></div>
+        </div>
+      `;
+
+      ul.appendChild(row);
+
+      // apply positive/negative class based on disponible value
+      try {
+        const dispoEl = row.querySelector(`.tcr-disponible[data-account="${key}"]`);
+        if (dispoEl) {
+          if (Number(disponible) < 0) {
+            dispoEl.classList.add('negative');
+            dispoEl.classList.remove('positive');
+          } else {
+            dispoEl.classList.add('positive');
+            dispoEl.classList.remove('negative');
+          }
+          // ensure displayed formatted value is consistent
+          dispoEl.textContent = formatCurrency(disponible);
+        }
+      } catch (err) {
+        // ignore any DOM timing issues
+      }
+    });
+    listContainer.appendChild(ul);
+
+    // Add event listeners for inputs (accept/display currency formatted values)
+    listContainer.querySelectorAll('.tcr-cupo-input').forEach(input => {
+      input.addEventListener('change', (e) => {
+        const accountKey = e.target.dataset.account;
+        // Parse formatted currency string back to number
+        const raw = e.target.value || '';
+        const cleaned = String(raw).replace(/\s/g,'').replace(/\$/g,'').replace(/CLP/g,'').replace(/,/g,'').replace(/\./g,'');
+        // cleaned may be like "123456" or include decimal separator if user typed dot/comma; attempt robust parse:
+        let numeric = parseFloat(raw.toString().replace(/[^0-9\-,\.]/g, '').replace(/\./g, '').replace(/,/g, '.'));
+        if (isNaN(numeric)) {
+          // fallback to integer extraction
+          numeric = parseFloat(cleaned) || 0;
+        }
+        if (numeric < 0) numeric = 0;
+        // store on account object
+        if (!accounts[accountKey]) accounts[accountKey] = {};
+        accounts[accountKey].tcrLimit = numeric;
+        // Update displayed disponible for this account based on recalculated used sum
+        const dispoEl = listContainer.querySelector(`.tcr-disponible[data-account="${accountKey}"]`);
+        const utilizadoEl = listContainer.querySelector(`.tcr-utilizado[data-account="${accountKey}"]`);
+        const used = transactions
+          .filter(t => t.account === accountKey)
+          .reduce((sum, t) => {
+            const amt = Math.abs(Number(t.amount || 0));
+            const totalInst = Number(t.totalInstallments) || 1;
+            const currentInst = Number(t.currentInstallment) || 1;
+            const remaining = Math.max(1, totalInst - currentInst + 1);
+            return sum + (amt * remaining);
+          }, 0);
+        const disp = accounts[accountKey].tcrLimit - used;
+        if (dispoEl) dispoEl.textContent = formatCurrency(disp);
+        if (utilizadoEl) utilizadoEl.textContent = formatCurrency(used);
+        // Rewrite the input value to a consistent currency format
+        e.target.value = formatCurrency(accounts[accountKey].tcrLimit);
+        // persist and refresh lists elsewhere
+        saveToLocalStorage();
+      });
+
+      // allow Enter key to blur and trigger change, and keep currency formatting on blur
+      input.addEventListener('keypress', (ev) => {
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+          input.blur();
+        }
+      });
+
+      input.addEventListener('blur', (ev) => {
+        // ensure currency formatting on blur even if user didn't change (keeps consistent display)
+        const accountKey = ev.target.dataset.account;
+        const val = accounts[accountKey] && accounts[accountKey].tcrLimit ? accounts[accountKey].tcrLimit : 0;
+        ev.target.value = formatCurrency(Number(val || 0));
+      });
+
+      // on focus show raw number for easier editing
+      input.addEventListener('focus', (ev) => {
+        const accountKey = ev.target.dataset.account;
+        const val = accounts[accountKey] && accounts[accountKey].tcrLimit ? accounts[accountKey].tcrLimit : 0;
+        ev.target.value = val || '';
+      });
+    });
+  }
+
+  function showTotalesModal(){
+    buildTotalesTCRList();
+    if(modal){
+      modal.style.display = 'block';
+      modal.setAttribute('aria-hidden','false');
+    }
+  }
+
+  function hideTotalesModal(){
+    if(modal){
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden','true');
+    }
+  }
+
+  if(totalesBtn){
+    totalesBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      showTotalesModal();
+    });
+  }
+
+  if(closeBtn){
+    closeBtn.addEventListener('click', hideTotalesModal);
+  }
+
+  window.addEventListener('click', (e) => {
+    if(e.target === modal){
+      hideTotalesModal();
+    }
+  });
+
+  // Rebuild list when accounts change by wrapping saveToLocalStorage to also update view
+  const originalSave = saveToLocalStorage;
+  window.saveToLocalStorage = function(){
+    originalSave();
+    // if modal open, refresh content
+    if(modal && modal.style.display === 'block'){
+      buildTotalesTCRList();
+    }
+  };
+})();
+
 function generateExcelReport() {
   // Create workbook
   const wb = XLSX.utils.book_new();
@@ -4508,20 +4711,38 @@ function generateExcelReport() {
 }
 
 function generateSalesSheet() {
-  // Prepare sales data
-  const salesData = salonSales.map(sale => ({
-    'Semana': `Semana ${sale.week}`,
-    'Fecha': new Date(sale.date).toLocaleDateString(),
-    'Peluquero': sale.hairdresser,
-    'Código': sale.serviceCode,
-    'Monto': sale.amount,
-    'Tipo Pago': sale.paymentType.toUpperCase(),
-    'Comisión': sale.commission,
-    'Comisión + IVA': sale.commissionWithIVA,
-    'Monto Neto': sale.netAmount,
-    'Fecha Abono': sale.paymentDate ? new Date(sale.paymentDate).toLocaleDateString() : '',
-    'Pagado': sale.paid ? 'Sí' : 'No'
-  }));
+  // Prepare sales data (round numeric values to integers) and include related boleta number if present
+  const salesData = salonSales.map(sale => {
+    // Determine date key used for boleta storage (ISO yyyy-mm-dd)
+    const saleDateKey = new Date(sale.date).toISOString().split('T')[0];
+
+    // Determine boleta type key: 'efectivo' for cash, 'tarjeta' for card payments
+    const boletaType = (sale.paymentType === 'efectivo') ? 'efectivo' : 'tarjeta';
+
+    // Hairdresser key stored in boletas is lowercase (e.g., 'aldo', 'marcos', 'otro')
+    const hairdresserKey = sale.hairdresser ? sale.hairdresser.toLowerCase() : '';
+
+    // Compose lookup key used in salesBoletas storage
+    const boletaKey = `${hairdresserKey}_${saleDateKey}_${boletaType}`;
+
+    // Lookup boleta number (may be undefined)
+    const boletaNumber = salesBoletas[boletaKey] || '';
+
+    return {
+      'Semana': `Semana ${sale.week}`,
+      'Fecha': formatDate(sale.date),
+      'Peluquero': sale.hairdresser,
+      'Código': sale.serviceCode,
+      'Monto': Math.round(Number(sale.amount || 0)),
+      'Tipo Pago': sale.paymentType.toUpperCase(),
+      'Comisión': Math.round(Number(sale.commission || 0)),
+      'Comisión + IVA': Math.round(Number(sale.commissionWithIVA || 0)),
+      'Monto Neto': Math.round(Number(sale.netAmount || 0)),
+      'Fecha Abono': sale.paymentDate ? formatDate(sale.paymentDate) : '',
+      'Pagado': sale.paid ? 'Sí' : 'No',
+      'Boleta': boletaNumber
+    };
+  });
 
   return XLSX.utils.json_to_sheet(salesData);
 }
@@ -4545,13 +4766,14 @@ function generateHairdresserTotalsSheet(hairdresser) {
   const retencion = totalVentas * (config.ret / 100);
   const liquido = totalVentas - totalPorc;
 
+  // Round all numeric values to integers for the report
   const data = [
     ['Concepto', 'Monto'],
-    ['TF Ventas', totalVentas],
-    ['TF Venta Tarjeta', totalTarjeta],
-    ['TF Porc.', totalPorc],
-    ['Retención', retencion],
-    ['Líquido', liquido]
+    ['TF Ventas', Math.round(totalVentas)],
+    ['TF Venta Tarjeta', Math.round(totalTarjeta)],
+    ['TF Porc.', Math.round(totalPorc)],
+    ['Retención', Math.round(retencion)],
+    ['Líquido', Math.round(liquido)]
   ];
 
   return XLSX.utils.aoa_to_sheet(data);
@@ -4581,10 +4803,10 @@ function generateHairdresserWeeklySheet(hairdresser) {
 
     return {
       'Semana': `Semana ${week}`,
-      'Total Ventas': totalVentas,
-      'Total Venta Tarjeta': totalTarjeta,
-      'Total Porc.': totalPorc,
-      'Diferencia': totalTarjeta - totalPorc
+      'Total Ventas': Math.round(totalVentas),
+      'Total Venta Tarjeta': Math.round(totalTarjeta),
+      'Total Porc.': Math.round(totalPorc),
+      'Diferencia': Math.round(totalTarjeta - totalPorc)
     };
   }).filter(data => data !== null);
 
@@ -4592,7 +4814,7 @@ function generateHairdresserWeeklySheet(hairdresser) {
 }
 
 function generateSummarySheet() {
-  // Calculate general totals
+  // Calculate general totals and round values to integers for report
   const totalVentas = salonSales.reduce((sum, sale) => sum + sale.amount, 0);
   const totalTarjeta = salonSales.filter(sale => 
     sale.paymentType === 'debito' || sale.paymentType === 'credito'
@@ -4609,17 +4831,17 @@ function generateSummarySheet() {
   const uniqueDays = new Set(salonSales.map(sale => 
     new Date(sale.date).toISOString().split('T')[0]
   ));
-  const promPorcDia = totalPorc / uniqueDays.size;
+  const promPorcDia = uniqueDays.size > 0 ? totalPorc / uniqueDays.size : 0;
 
   const data = [
     ['Concepto', 'Monto'],
-    ['TF Ventas', totalVentas],
-    ['TF Venta Tarjeta', totalTarjeta],
-    ['TF Porc.', totalPorc],
-    ['Prom. Porc. Día', promPorcDia],
+    ['TF Ventas', Math.round(totalVentas)],
+    ['TF Venta Tarjeta', Math.round(totalTarjeta)],
+    ['TF Porc.', Math.round(totalPorc)],
+    ['Prom. Porc. Día', Math.round(promPorcDia)],
     ['Días Trabajados', uniqueDays.size],
-    ['Meta Mes', figaroIndicators.metaMes || 0],
-    ['Días Hábiles Mes', figaroIndicators.diasHabilesMes || 0]
+    ['Meta Mes', Math.round(figaroIndicators.metaMes || 0)],
+    ['Días Hábiles Mes', Math.round(figaroIndicators.diasHabilesMes || 0)]
   ];
 
   return XLSX.utils.aoa_to_sheet(data);

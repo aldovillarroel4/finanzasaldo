@@ -262,6 +262,7 @@
           </form>
           <button id="showCalculator" class="calculator-btn">Calculadora</button>
           <button id="proyTCR" class="proy-tcr-btn">Proyección TCR</button>
+          <button id="totalesTCR" class="totales-tcr-btn">Totales TCR</button>
         </div>
 
         <div id="calculatorPanel" style="display: none;">
@@ -730,6 +731,16 @@
           <div class="tcr-content">
             <!-- TCR projections will be added dynamically -->
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="totalesTCRModal" class="tcr-modal" aria-hidden="true">
+      <div class="totales-tcr-modal-content">
+        <span class="totales-tcr-close">&times;</span>
+        <h2>Totales TCR</h2>
+        <div id="totalesTCRList" class="totales-tcr-list">
+          <!-- Lista de cuentas TCR se inyectará aquí -->
         </div>
       </div>
     </div>
