@@ -4711,20 +4711,38 @@ function generateExcelReport() {
 }
 
 function generateSalesSheet() {
-  // Prepare sales data
-  const salesData = salonSales.map(sale => ({
-    'Semana': `Semana ${sale.week}`,
-    'Fecha': new Date(sale.date).toLocaleDateString(),
-    'Peluquero': sale.hairdresser,
-    'Código': sale.serviceCode,
-    'Monto': sale.amount,
-    'Tipo Pago': sale.paymentType.toUpperCase(),
-    'Comisión': sale.commission,
-    'Comisión + IVA': sale.commissionWithIVA,
-    'Monto Neto': sale.netAmount,
-    'Fecha Abono': sale.paymentDate ? new Date(sale.paymentDate).toLocaleDateString() : '',
-    'Pagado': sale.paid ? 'Sí' : 'No'
-  }));
+  // Prepare sales data (round numeric values to integers) and include related boleta number if present
+  const salesData = salonSales.map(sale => {
+    // Determine date key used for boleta storage (ISO yyyy-mm-dd)
+    const saleDateKey = new Date(sale.date).toISOString().split('T')[0];
+
+    // Determine boleta type key: 'efectivo' for cash, 'tarjeta' for card payments
+    const boletaType = (sale.paymentType === 'efectivo') ? 'efectivo' : 'tarjeta';
+
+    // Hairdresser key stored in boletas is lowercase (e.g., 'aldo', 'marcos', 'otro')
+    const hairdresserKey = sale.hairdresser ? sale.hairdresser.toLowerCase() : '';
+
+    // Compose lookup key used in salesBoletas storage
+    const boletaKey = `${hairdresserKey}_${saleDateKey}_${boletaType}`;
+
+    // Lookup boleta number (may be undefined)
+    const boletaNumber = salesBoletas[boletaKey] || '';
+
+    return {
+      'Semana': `Semana ${sale.week}`,
+      'Fecha': formatDate(sale.date),
+      'Peluquero': sale.hairdresser,
+      'Código': sale.serviceCode,
+      'Monto': Math.round(Number(sale.amount || 0)),
+      'Tipo Pago': sale.paymentType.toUpperCase(),
+      'Comisión': Math.round(Number(sale.commission || 0)),
+      'Comisión + IVA': Math.round(Number(sale.commissionWithIVA || 0)),
+      'Monto Neto': Math.round(Number(sale.netAmount || 0)),
+      'Fecha Abono': sale.paymentDate ? formatDate(sale.paymentDate) : '',
+      'Pagado': sale.paid ? 'Sí' : 'No',
+      'Boleta': boletaNumber
+    };
+  });
 
   return XLSX.utils.json_to_sheet(salesData);
 }
@@ -4748,13 +4766,14 @@ function generateHairdresserTotalsSheet(hairdresser) {
   const retencion = totalVentas * (config.ret / 100);
   const liquido = totalVentas - totalPorc;
 
+  // Round all numeric values to integers for the report
   const data = [
     ['Concepto', 'Monto'],
-    ['TF Ventas', totalVentas],
-    ['TF Venta Tarjeta', totalTarjeta],
-    ['TF Porc.', totalPorc],
-    ['Retención', retencion],
-    ['Líquido', liquido]
+    ['TF Ventas', Math.round(totalVentas)],
+    ['TF Venta Tarjeta', Math.round(totalTarjeta)],
+    ['TF Porc.', Math.round(totalPorc)],
+    ['Retención', Math.round(retencion)],
+    ['Líquido', Math.round(liquido)]
   ];
 
   return XLSX.utils.aoa_to_sheet(data);
@@ -4784,10 +4803,10 @@ function generateHairdresserWeeklySheet(hairdresser) {
 
     return {
       'Semana': `Semana ${week}`,
-      'Total Ventas': totalVentas,
-      'Total Venta Tarjeta': totalTarjeta,
-      'Total Porc.': totalPorc,
-      'Diferencia': totalTarjeta - totalPorc
+      'Total Ventas': Math.round(totalVentas),
+      'Total Venta Tarjeta': Math.round(totalTarjeta),
+      'Total Porc.': Math.round(totalPorc),
+      'Diferencia': Math.round(totalTarjeta - totalPorc)
     };
   }).filter(data => data !== null);
 
@@ -4795,7 +4814,7 @@ function generateHairdresserWeeklySheet(hairdresser) {
 }
 
 function generateSummarySheet() {
-  // Calculate general totals
+  // Calculate general totals and round values to integers for report
   const totalVentas = salonSales.reduce((sum, sale) => sum + sale.amount, 0);
   const totalTarjeta = salonSales.filter(sale => 
     sale.paymentType === 'debito' || sale.paymentType === 'credito'
@@ -4812,17 +4831,17 @@ function generateSummarySheet() {
   const uniqueDays = new Set(salonSales.map(sale => 
     new Date(sale.date).toISOString().split('T')[0]
   ));
-  const promPorcDia = totalPorc / uniqueDays.size;
+  const promPorcDia = uniqueDays.size > 0 ? totalPorc / uniqueDays.size : 0;
 
   const data = [
     ['Concepto', 'Monto'],
-    ['TF Ventas', totalVentas],
-    ['TF Venta Tarjeta', totalTarjeta],
-    ['TF Porc.', totalPorc],
-    ['Prom. Porc. Día', promPorcDia],
+    ['TF Ventas', Math.round(totalVentas)],
+    ['TF Venta Tarjeta', Math.round(totalTarjeta)],
+    ['TF Porc.', Math.round(totalPorc)],
+    ['Prom. Porc. Día', Math.round(promPorcDia)],
     ['Días Trabajados', uniqueDays.size],
-    ['Meta Mes', figaroIndicators.metaMes || 0],
-    ['Días Hábiles Mes', figaroIndicators.diasHabilesMes || 0]
+    ['Meta Mes', Math.round(figaroIndicators.metaMes || 0)],
+    ['Días Hábiles Mes', Math.round(figaroIndicators.diasHabilesMes || 0)]
   ];
 
   return XLSX.utils.aoa_to_sheet(data);
