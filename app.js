@@ -4994,6 +4994,23 @@ let currentGoogleUser = null;
    });
  }
 
+ // Helper to update the last backup name indicator and persist it
+ function updateLastBackupName(name) {
+   try {
+     const el = document.getElementById('lastBackupName');
+     if (!el) return;
+     if (name && name.length) {
+       el.textContent = `Último respaldo: ${name}`;
+       localStorage.setItem('last_backup_name', name);
+     } else {
+       el.textContent = 'Último respaldo: Ninguno';
+       localStorage.removeItem('last_backup_name');
+     }
+   } catch (err) {
+     console.warn('No se pudo actualizar indicador de último respaldo:', err);
+   }
+ }
+
 // Request (or ensure) driveAccessToken; if promptConsent true use prompt:'consent'
 function requestDriveToken(promptConsent = false) {
   return new Promise((resolve, reject) => {
@@ -5138,10 +5155,14 @@ async function saveBackupToDrive() {
 
     const result = await res.json();
     console.log('Respaldo guardado en Drive:', result);
+    // Update last backup indicator and persist
+    try {
+      updateLastBackupName(result.name);
+    } catch (e) { /* ignore */ }
     alert(`Respaldo guardado correctamente como "${result.name}"`);
   } catch (err) {
-    console.error('Excepción guardando respaldo en Drive:', err);
-    alert('Ocurrió un error al guardar respaldo en Drive: ' + (err.message || err));
+    console.error('Excepción guardando respaldo en Google Drive:', err);
+    alert('Ocurrió un error al guardar respaldo en Google Drive: ' + (err.message || err));
   }
 }
 
@@ -5203,6 +5224,10 @@ async function loadLatestBackupFromDrive() {
 
     const state = await getRes.json();
     restoreAppState(state);
+    // update last backup indicator and persist name
+    try {
+      updateLastBackupName(latest.name);
+    } catch(e){/*ignore*/}
     alert(`Respaldo "${latest.name}" cargado correctamente.`);
   } catch (err) {
     console.error('Excepción cargando respaldo de Drive:', err);
