@@ -5095,7 +5095,7 @@ function restoreAppState(state) {
   }
 }
 
-// Save backup to Drive inside fixed folder ID; filename format: YYYY-MM-DD_HH.MM-finanzas.json
+ // Save backup to Drive inside fixed folder ID; filename format: YYYY-MM-DD_HH.MM-finanzas.json
 async function saveBackupToDrive() {
   try {
     // Ensure logged in user
@@ -5156,7 +5156,30 @@ async function saveBackupToDrive() {
 
     const result = await res.json();
     console.log('Respaldo guardado en Drive:', result);
-    alert(`Respaldo guardado correctamente como "${result.name}"`);
+
+    // Immediately restore the just-saved state locally and update the "Último respaldo cargado" indicator
+    try {
+      // Restore application state from the appState we just uploaded
+      restoreAppState(appState);
+
+      // Persist and show the filename of the restored backup
+      try {
+        localStorage.setItem('last_backup_name', fileName);
+        const el = document.getElementById('lastBackupName');
+        if (el) el.textContent = fileName;
+      } catch (e) {
+        console.warn('No se pudo guardar/mostrar el nombre del respaldo:', e);
+      }
+
+      // Also persist that we used this backup (for consistency)
+      saveToLocalStorage();
+      saveSalonToLocalStorage();
+
+      alert(`Respaldo guardado y cargado correctamente como "${result.name}"`);
+    } catch (restoreErr) {
+      console.error('Error restaurando respaldo localmente después de guardar:', restoreErr);
+      alert(`Respaldo guardado en Drive como "${result.name}", pero ocurrió un error al cargarlo localmente.`);
+    }
   } catch (err) {
     console.error('Excepción guardando respaldo en Drive:', err);
     alert('Ocurrió un error al guardar respaldo en Drive: ' + (err.message || err));
