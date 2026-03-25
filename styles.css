@@ -754,6 +754,18 @@ button:hover {
 /* Keep sign-out red but use the same sizing/shape as other backup buttons */
 .google-signout {
   background-color: #e74c3c; /* red like before */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  height: 36px;
+  min-width: 110px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
 }
 .google-signout:hover {
   background-color: #c0392b;
