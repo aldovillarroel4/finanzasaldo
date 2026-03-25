@@ -751,6 +751,14 @@ button:hover {
   background-color: #7f8c8d;
 }
 
+/* Keep sign-out red but use the same sizing/shape as other backup buttons */
+.google-signout {
+  background-color: #e74c3c; /* red like before */
+}
+.google-signout:hover {
+  background-color: #c0392b;
+}
+
 .edit-all-btn {
   
 }
