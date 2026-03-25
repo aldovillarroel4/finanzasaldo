@@ -1260,6 +1260,33 @@
       }
     })();
   </script>
+
+  <!-- Sync "Salir" width to match "Guardar" -->
+  <script>
+    (function(){
+      function syncSignOutWidth() {
+        const saveBtn = document.getElementById('saveToDriveBtn');
+        const signOutBtn = document.getElementById('googleSignOutBtn');
+        if (!saveBtn || !signOutBtn) return;
+        const saveStyle = window.getComputedStyle(saveBtn);
+        signOutBtn.style.width = saveStyle.width;
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', syncSignOutWidth);
+      } else {
+        syncSignOutWidth();
+      }
+
+      window.addEventListener('resize', syncSignOutWidth);
+
+      const targets = [document.getElementById('saveToDriveBtn'), document.getElementById('googleSignOutBtn')].filter(Boolean);
+      if (targets.length) {
+        const mo = new MutationObserver(() => setTimeout(syncSignOutWidth, 30));
+        targets.forEach(n => mo.observe(n, { attributes: true, childList: true, subtree: true, characterData: true }));
+      }
+    })();
+  </script>
   </div>
 </body>
 </html>
