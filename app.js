@@ -49,12 +49,6 @@ let accountsOrder = {
   activos: [],
   pasivos: []
 };
-
-// Drive token management (in-memory only)
-let driveTokenClient;
-let driveAccessToken = null;
-let lastTokenTime = 0; // Date.now() when a new token is obtained
-const TOKEN_MAX_AGE_MS = 45 * 60 * 1000; // 45 minutes
 let transactionsOrder = [];
 let isPanelsHidden = false;
 
@@ -4899,15 +4893,15 @@ let currentGoogleUser = null;
 
      // Initialize token client for Drive (requesting drive.file scope)
      if (window.google && google.accounts && google.accounts.oauth2) {
-       // Initialize the token client ONCE. The callback stores token in memory and timestamp only.
        driveTokenClient = google.accounts.oauth2.initTokenClient({
          client_id: GOOGLE_CLIENT_ID,
          scope: 'https://www.googleapis.com/auth/drive.file',
          callback: (tokenResponse) => {
+           // tokenResponse contains access_token (or error)
            if (tokenResponse && tokenResponse.access_token) {
              driveAccessToken = tokenResponse.access_token;
-             lastTokenTime = Date.now();
-             console.log('Nuevo token Drive obtenido, expira en aproximadamente ' + (tokenResponse.expires_in || 'n/a') + 's');
+             try { localStorage.setItem('drive_access_token', driveAccessToken); } catch(e){/*ignore*/}
+             console.log('Drive access token obtenido');
            } else {
              console.error('No se obtuvo access_token de Drive', tokenResponse);
            }
@@ -4931,7 +4925,11 @@ let currentGoogleUser = null;
          const picture = payload.picture || '';
          onGoogleUserLoggedIn({ name, email, picture });
        }
-       // Do NOT restore drive tokens from storage; keep them only in memory per-session.
+       // restore driveAccessToken if previously saved (note: tokens may expire)
+       const storedDriveToken = localStorage.getItem('drive_access_token');
+       if (storedDriveToken) {
+         driveAccessToken = storedDriveToken;
+       }
 
        // Restore and show last backup filename if available
        try {
@@ -5004,66 +5002,45 @@ let currentGoogleUser = null;
    }
 
    // Request Drive access token (consent prompt first time)
-   try {
-     // Request an initial token with consent prompt the first time after login to ensure permission is granted.
-     if (driveTokenClient) {
-       driveTokenClient.requestAccessToken({ prompt: 'consent' });
-     }
-     console.log('Solicitud inicial de token Drive realizada (consent).');
-   } catch (err) {
-     console.warn('No se pudo solicitar token inicial de Drive:', err);
-   }
+   requestDriveToken(true).then(() => {
+     // Token obtained; do NOT auto-load backups from Drive on page refresh or sign-in.
+     // Backups will only be loaded when the user explicitly clicks the "Cargar" button.
+     console.log('Drive token obtenido; carga de respaldos desde Drive se realizará solo con el botón "Cargar".');
+   }).catch(err => {
+     console.warn('No se obtuvo token de Drive:', err);
+   });
  }
 
-/*
-  Token helpers:
-  - needNewToken(): checks if we have a token and whether it's older than TOKEN_MAX_AGE_MS
-  - getDriveToken(): returns current token or requests a silent renewal (prompt:'') and resolves when callback sets the token
-*/
-function needNewToken() {
-  if (!driveAccessToken) return true;
-  const age = Date.now() - lastTokenTime;
-  return age > TOKEN_MAX_AGE_MS;
-}
-
-async function getDriveToken() {
-  if (!driveTokenClient) {
-    console.error('driveTokenClient no está inicializado');
-    return null;
-  }
-  if (!needNewToken()) {
-    return driveAccessToken;
-  }
-
+// Request (or ensure) driveAccessToken; if promptConsent true use prompt:'consent'
+function requestDriveToken(promptConsent = false) {
   return new Promise((resolve, reject) => {
+    if (!driveTokenClient) {
+      return reject(new Error('driveTokenClient no está inicializado'));
+    }
+    // If we already have a token, resolve immediately (token validity is short; for robust use you'd check expiry)
+    if (driveAccessToken) return resolve(driveAccessToken);
+
     try {
-      // Temporarily override the token client's callback to resolve/reject this promise once it runs.
-      const originalCallback = driveTokenClient.callback;
-      driveTokenClient.callback = (resp) => {
-        // Ensure the main callback logic runs too (it sets driveAccessToken and lastTokenTime)
-        try {
-          if (typeof originalCallback === 'function') originalCallback(resp);
-        } catch (e) {
-          // ignore
+      driveTokenClient.requestAccessToken({
+        prompt: promptConsent ? 'consent' : ''
+      });
+      // The token will be set in the token client callback; poll briefly until set
+      const checkInterval = setInterval(() => {
+        if (driveAccessToken) {
+          clearInterval(checkInterval);
+          resolve(driveAccessToken);
         }
+      }, 200);
 
-        if (resp && resp.error) {
-          console.error('Error renovando token Drive:', resp.error);
-          // restore original
-          driveTokenClient.callback = originalCallback;
-          reject(resp);
-          return;
+      // Timeout after a while
+      setTimeout(() => {
+        if (!driveAccessToken) {
+          clearInterval(checkInterval);
+          reject(new Error('Timeout esperando access token de Drive'));
         }
-        // driveAccessToken was set by the callback we initialized earlier
-        // restore original callback
-        driveTokenClient.callback = originalCallback;
-        resolve(driveAccessToken);
-      };
-
-      // Silent request: prompt:'' ensures no consent popup while session active
-      driveTokenClient.requestAccessToken({ prompt: '' });
-    } catch (e) {
-      reject(e);
+      }, 20000);
+    } catch (err) {
+      reject(err);
     }
   });
 }
@@ -5126,10 +5103,13 @@ async function saveBackupToDrive() {
       return;
     }
 
-    // Ensure we have a fresh Drive access token (will renew silently if needed)
-    const token = await getDriveToken();
-    if (!token) {
-      alert('No se pudo obtener token de Google Drive. Intenta cerrar sesión y volver a iniciar.');
+    // Ensure we have a Drive access token (request if needed)
+    if (!driveAccessToken) {
+      await requestDriveToken(true);
+    }
+
+    if (!driveAccessToken) {
+      alert('No se pudo obtener token de acceso para Google Drive.');
       return;
     }
 
@@ -5158,48 +5138,13 @@ async function saveBackupToDrive() {
     form.append('metadata', metaBlob);
     form.append('file', blob);
 
-    // Use the token obtained from getDriveToken()
-    let res;
-    try {
-      res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,parents,createdTime', {
-        method: 'POST',
-        headers: {
-          Authorization: 'Bearer ' + token
-        },
-        body: form
-      });
-    } catch (err) {
-      console.error('Error de red al subir backup a Drive:', err);
-      alert('Error de red al guardar respaldo en Google Drive.');
-      return;
-    }
-
-    // If we get 401/403 try renewing token once and retry
-    if (res && (res.status === 401 || res.status === 403)) {
-      console.warn('401/403 de Drive, intentando renovar token y reintentar una sola vez');
-      const newToken = await getDriveToken();
-      if (!newToken) {
-        alert('Error en Google Drive, por favor vuelve a iniciar sesión con Google en la app.');
-        return;
-      }
-      try {
-        res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,parents,createdTime', {
-          method: 'POST',
-          headers: {
-            Authorization: 'Bearer ' + newToken
-          },
-          body: form
-        });
-      } catch (err) {
-        console.error('Error de red al reintentar subir backup a Drive:', err);
-        alert('Error de red al guardar respaldo en Google Drive.');
-        return;
-      }
-      if (!res.ok) {
-        alert('Error en Google Drive, por favor vuelve a iniciar sesión con Google en la app.');
-        return;
-      }
-    }
+    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,parents,createdTime', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + driveAccessToken
+      },
+      body: form
+    });
 
     if (!res.ok) {
       const text = await res.text();
@@ -5261,47 +5206,10 @@ async function loadLatestBackupFromDrive() {
     const fields = encodeURIComponent('files(id,name,createdTime)');
     const listUrl = `https://www.googleapis.com/drive/v3/files?q=${q}&orderBy=createdTime desc&fields=${fields}`;
 
-    // Ensure fresh token
-    const token = await getDriveToken();
-    if (!token) {
-      alert('No se pudo obtener token de Google Drive. Intenta cerrar sesión y volver a iniciar.');
-      return;
-    }
-
-    let listRes;
-    try {
-      listRes = await fetch(listUrl, {
-        method: 'GET',
-        headers: { Authorization: 'Bearer ' + token }
-      });
-    } catch (err) {
-      console.error('Error de red listando archivos en Drive:', err);
-      alert('Error de red al listar respaldos en Google Drive.');
-      return;
-    }
-
-    if (listRes && (listRes.status === 401 || listRes.status === 403)) {
-      console.warn('401/403 de Drive list por archivos, intentando renovar token y reintentar una sola vez');
-      const newToken = await getDriveToken();
-      if (!newToken) {
-        alert('Error en Google Drive, por favor vuelve a iniciar sesión con Google en la app.');
-        return;
-      }
-      try {
-        listRes = await fetch(listUrl, {
-          method: 'GET',
-          headers: { Authorization: 'Bearer ' + newToken }
-        });
-      } catch (err) {
-        console.error('Error de red reintentando listar archivos en Drive:', err);
-        alert('Error de red al listar respaldos en Google Drive.');
-        return;
-      }
-      if (!listRes.ok) {
-        alert('Error en Google Drive, por favor vuelve a iniciar sesión con Google en la app.');
-        return;
-      }
-    }
+    const listRes = await fetch(listUrl, {
+      method: 'GET',
+      headers: { Authorization: 'Bearer ' + driveAccessToken }
+    });
 
     if (!listRes.ok) {
       const t = await listRes.text();
@@ -5321,42 +5229,10 @@ async function loadLatestBackupFromDrive() {
     const fileId = latest.id;
 
     const getUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
-    let getRes;
-    try {
-      getRes = await fetch(getUrl, {
-        method: 'GET',
-        headers: { Authorization: 'Bearer ' + token }
-      });
-    } catch (err) {
-      console.error('Error de red descargando respaldo:', err);
-      alert('Error de red al descargar respaldo desde Drive.');
-      return;
-    }
-
-    if (getRes && (getRes.status === 401 || getRes.status === 403)) {
-      console.warn('401/403 de Drive al descargar archivo, intentando renovar token y reintentar una sola vez');
-      const newToken = await getDriveToken();
-      if (!newToken) {
-        alert('Error en Google Drive, por favor vuelve a iniciar sesión con Google en la app.');
-        return;
-      }
-      try {
-        getRes = await fetch(getUrl, {
-          method: 'GET',
-          headers: { Authorization: 'Bearer ' + newToken }
-        });
-      } catch (err) {
-        console.error('Error de red reintentando descargar respaldo:', err);
-        alert('Error de red al descargar respaldo desde Drive.');
-        return;
-      }
-      if (!getRes.ok) {
-        const t = await getRes.text();
-        console.error('Error descargando respaldo tras reintento:', getRes.status, t);
-        alert('Error en Google Drive, por favor vuelve a iniciar sesión con Google en la app.');
-        return;
-      }
-    }
+    const getRes = await fetch(getUrl, {
+      method: 'GET',
+      headers: { Authorization: 'Bearer ' + driveAccessToken }
+    });
 
     if (!getRes.ok) {
       const t = await getRes.text();
