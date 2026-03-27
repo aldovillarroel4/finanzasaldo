@@ -2333,17 +2333,31 @@ document.getElementById('backupRestore').addEventListener('click', () => {
 
   function positionDropdown() {
     const rect = searchBtn.getBoundingClientRect();
-    searchDropdown.style.left = (rect.left) + 'px';
+    // prefer positioning relative to viewport + scroll offset
+    searchDropdown.style.left = (rect.left + window.scrollX) + 'px';
     searchDropdown.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+  }
+
+  // Utility: determine if user is considered signed in (checks runtime and stored JWT fallback)
+  function isGoogleSignedIn() {
+    if (window.currentGoogleUser) return true;
+    if (typeof currentGoogleUser !== 'undefined' && currentGoogleUser) return true;
+    try {
+      const storedJwt = localStorage.getItem('google_jwt');
+      if (storedJwt && storedJwt.length > 10) return true;
+    } catch (e) { /* ignore */ }
+    return false;
   }
 
   async function listBackupsFromDrive() {
     searchDropdown.innerHTML = '';
-    // If no Google session, show message
-    if (!currentGoogleUser && !window.currentGoogleUser) {
+
+    // If no Google session, show message "Inicie sesión"
+    if (!isGoogleSignedIn()) {
       const p = document.createElement('div');
       p.style.padding = '12px';
       p.style.color = '#333';
+      p.style.fontWeight = '700';
       p.textContent = 'Inicie sesión';
       searchDropdown.appendChild(p);
       return;
