@@ -2333,9 +2333,18 @@ document.getElementById('backupRestore').addEventListener('click', () => {
 
   function positionDropdown() {
     const rect = searchBtn.getBoundingClientRect();
-    // prefer positioning relative to viewport + scroll offset
-    searchDropdown.style.left = (rect.left + window.scrollX) + 'px';
-    searchDropdown.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+    const viewportLeft = window.scrollX || window.pageXOffset || 0;
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+    // Prefer placing dropdown aligned to button's left, but clamp so it doesn't overflow right edge.
+    // We reserve 12px margin from the viewport right edge and assume max dropdown width up to 520px.
+    const maxDropdownWidth = 520;
+    const desiredLeft = rect.left + viewportLeft;
+    const maxLeftAllowed = viewportLeft + viewportWidth - maxDropdownWidth - 12;
+    const left = Math.min(desiredLeft, Math.max(viewportLeft + 8, maxLeftAllowed));
+    searchDropdown.style.left = left + 'px';
+    searchDropdown.style.top = (rect.bottom + (window.scrollY || window.pageYOffset) + 6) + 'px';
+    // also set a reasonable maxWidth to ensure clamping works
+    searchDropdown.style.maxWidth = maxDropdownWidth + 'px';
   }
 
   // Utility: determine if user is considered signed in (checks runtime and stored JWT fallback)
@@ -2419,9 +2428,14 @@ document.getElementById('backupRestore').addEventListener('click', () => {
         const left = document.createElement('div');
         left.style.display = 'flex';
         left.style.flexDirection = 'column';
+        left.style.flex = '1';
+        left.style.marginRight = '8px';
         const name = document.createElement('div');
         name.style.fontWeight = '700';
         name.style.fontSize = '0.95em';
+        name.style.overflow = 'hidden';
+        name.style.textOverflow = 'ellipsis';
+        name.style.whiteSpace = 'nowrap';
         name.textContent = file.name;
         const time = document.createElement('div');
         time.style.fontSize = '0.8em';
@@ -2432,12 +2446,16 @@ document.getElementById('backupRestore').addEventListener('click', () => {
 
         const loadBtn = document.createElement('button');
         loadBtn.textContent = 'Cargar';
+        // Make the load button smaller as requested
         loadBtn.style.background = '#3498db';
         loadBtn.style.color = '#fff';
         loadBtn.style.border = 'none';
-        loadBtn.style.padding = '6px 10px';
+        loadBtn.style.padding = '4px 8px';
         loadBtn.style.borderRadius = '4px';
         loadBtn.style.cursor = 'pointer';
+        loadBtn.style.fontSize = '0.85em';
+        loadBtn.style.minWidth = '64px';
+        loadBtn.style.flex = '0 0 auto';
 
         loadBtn.addEventListener('click', async (ev) => {
           ev.stopPropagation();
