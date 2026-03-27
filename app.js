@@ -2225,6 +2225,7 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// BACKUP SAVE
 document.getElementById('backupSave').addEventListener('click', () => {
   const data = {
     accounts,
@@ -2250,6 +2251,7 @@ document.getElementById('backupSave').addEventListener('click', () => {
   backupDropdown.classList.remove('show');
 });
 
+// BACKUP RESTORE (local file)
 document.getElementById('backupRestore').addEventListener('click', () => {
   const input = document.createElement('input');
   input.type = 'file';
@@ -2308,6 +2310,223 @@ document.getElementById('backupRestore').addEventListener('click', () => {
   input.click();
   backupDropdown.classList.remove('show');
 });
+
+/* SEARCH button: show last 10 Drive backups and allow selecting one to load */
+(function(){
+  const searchBtn = document.getElementById('searchBtn');
+
+  // create dropdown container under button
+  const searchDropdown = document.createElement('div');
+  searchDropdown.className = 'backup-dropdown search-dropdown';
+  searchDropdown.style.position = 'absolute';
+  searchDropdown.style.minWidth = '300px';
+  searchDropdown.style.maxHeight = '320px';
+  searchDropdown.style.overflow = 'auto';
+  searchDropdown.style.background = '#fff';
+  searchDropdown.style.color = '#333';
+  searchDropdown.style.borderRadius = '6px';
+  searchDropdown.style.boxShadow = '0 6px 18px rgba(0,0,0,0.2)';
+  searchDropdown.style.zIndex = '1200';
+  searchDropdown.style.display = 'none';
+  searchDropdown.style.padding = '6px';
+  document.body.appendChild(searchDropdown);
+
+  function positionDropdown() {
+    const rect = searchBtn.getBoundingClientRect();
+    searchDropdown.style.left = (rect.left) + 'px';
+    searchDropdown.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+  }
+
+  async function listBackupsFromDrive() {
+    searchDropdown.innerHTML = '';
+    // If no Google session, show message
+    if (!currentGoogleUser && !window.currentGoogleUser) {
+      const p = document.createElement('div');
+      p.style.padding = '12px';
+      p.style.color = '#333';
+      p.textContent = 'Inicie sesión';
+      searchDropdown.appendChild(p);
+      return;
+    }
+
+    try {
+      if (!driveAccessToken) {
+        await requestDriveToken(true);
+      }
+      if (!driveAccessToken) {
+        const p = document.createElement('div');
+        p.style.padding = '12px';
+        p.style.color = '#333';
+        p.textContent = 'No se obtuvo token de Drive';
+        searchDropdown.appendChild(p);
+        return;
+      }
+
+      const q = encodeURIComponent(`'1nyPnBXUbMRuSBUNd45K7EN9OLkxbaMNO' in parents and mimeType='application/json'`);
+      const fields = encodeURIComponent('files(id,name,createdTime)');
+      const listUrl = `https://www.googleapis.com/drive/v3/files?q=${q}&orderBy=createdTime desc&pageSize=10&fields=${fields}`;
+
+      const listRes = await fetch(listUrl, {
+        method: 'GET',
+        headers: { Authorization: 'Bearer ' + driveAccessToken }
+      });
+
+      if (!listRes.ok) {
+        const t = await listRes.text();
+        console.error('Error listando archivos en Drive:', listRes.status, t);
+        const p = document.createElement('div');
+        p.style.padding = '12px';
+        p.style.color = '#333';
+        p.textContent = 'Error listando respaldos';
+        searchDropdown.appendChild(p);
+        return;
+      }
+
+      const listJson = await listRes.json();
+      const files = listJson.files || [];
+      if (files.length === 0) {
+        const p = document.createElement('div');
+        p.style.padding = '12px';
+        p.style.color = '#333';
+        p.textContent = 'No se encontraron respaldos en Drive';
+        searchDropdown.appendChild(p);
+        return;
+      }
+
+      files.forEach(file => {
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.justifyContent = 'space-between';
+        row.style.alignItems = 'center';
+        row.style.padding = '8px';
+        row.style.borderBottom = '1px solid #eee';
+        row.style.cursor = 'pointer';
+        row.title = file.name;
+        const left = document.createElement('div');
+        left.style.display = 'flex';
+        left.style.flexDirection = 'column';
+        const name = document.createElement('div');
+        name.style.fontWeight = '700';
+        name.style.fontSize = '0.95em';
+        name.textContent = file.name;
+        const time = document.createElement('div');
+        time.style.fontSize = '0.8em';
+        time.style.color = '#666';
+        time.textContent = new Date(file.createdTime).toLocaleString();
+        left.appendChild(name);
+        left.appendChild(time);
+
+        const loadBtn = document.createElement('button');
+        loadBtn.textContent = 'Cargar';
+        loadBtn.style.background = '#3498db';
+        loadBtn.style.color = '#fff';
+        loadBtn.style.border = 'none';
+        loadBtn.style.padding = '6px 10px';
+        loadBtn.style.borderRadius = '4px';
+        loadBtn.style.cursor = 'pointer';
+
+        loadBtn.addEventListener('click', async (ev) => {
+          ev.stopPropagation();
+          await loadBackupFileFromDrive(file.id, file.name);
+          hideSearchDropdown();
+        });
+
+        row.appendChild(left);
+        row.appendChild(loadBtn);
+        row.addEventListener('click', () => {
+          // clicking row also loads
+          loadBtn.click();
+        });
+
+        searchDropdown.appendChild(row);
+      });
+
+    } catch (err) {
+      console.error('Excepción listBackupsFromDrive:', err);
+      const p = document.createElement('div');
+      p.style.padding = '12px';
+      p.style.color = '#333';
+      p.textContent = 'Error listando respaldos';
+      searchDropdown.appendChild(p);
+    }
+  }
+
+  async function loadBackupFileFromDrive(fileId, fileName) {
+    try {
+      if (!driveAccessToken) {
+        await requestDriveToken(true);
+      }
+      if (!driveAccessToken) {
+        alert('No se pudo obtener token de acceso para Google Drive.');
+        return;
+      }
+
+      const getUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
+      const getRes = await fetch(getUrl, {
+        method: 'GET',
+        headers: { Authorization: 'Bearer ' + driveAccessToken }
+      });
+
+      if (!getRes.ok) {
+        const t = await getRes.text();
+        console.error('Error descargando respaldo:', getRes.status, t);
+        alert('Error descargando respaldo desde Drive: ' + getRes.statusText);
+        return;
+      }
+
+      const state = await getRes.json();
+      restoreAppState(state);
+
+      // Persist and show the filename of the loaded backup from Drive
+      try {
+        if (fileName) {
+          localStorage.setItem('last_backup_name', fileName);
+          const el = document.getElementById('lastBackupName');
+          if (el) el.textContent = fileName;
+        }
+      } catch (e) { /* ignore */ }
+
+      alert(`Respaldo "${fileName}" cargado correctamente.`);
+    } catch (err) {
+      console.error('Excepción cargando respaldo de Drive:', err);
+      alert('Ocurrió un error al cargar respaldo: ' + (err.message || err));
+    }
+  }
+
+  function showSearchDropdown() {
+    positionDropdown();
+    searchDropdown.style.display = 'block';
+    searchDropdown.style.minWidth = '320px';
+    searchDropdown.style.maxWidth = '520px';
+    searchDropdown.style.overflow = 'auto';
+    listBackupsFromDrive();
+    // close backupDropdown if open
+    backupDropdown.classList.remove('show');
+    window.addEventListener('resize', positionDropdown);
+    document.addEventListener('click', outsideClickListener);
+  }
+
+  function hideSearchDropdown() {
+    searchDropdown.style.display = 'none';
+    window.removeEventListener('resize', positionDropdown);
+    document.removeEventListener('click', outsideClickListener);
+  }
+
+  function outsideClickListener(e) {
+    if (!searchDropdown.contains(e.target) && e.target !== searchBtn) {
+      hideSearchDropdown();
+    }
+  }
+
+  searchBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (searchDropdown.style.display === 'block') {
+      hideSearchDropdown();
+    } else {
+      showSearchDropdown();
+    }
+  });
+})();
 
 function saveSalonToLocalStorage() {
   localStorage.setItem('figaro_sales', JSON.stringify(salonSales));
@@ -4991,7 +5210,6 @@ let currentGoogleUser = null;
 
  // Called when user is authenticated via Google Sign-In button
  function onGoogleUserLoggedIn(userData) {
-  const searchBtn = document.getElementById('searchBackupsBtn');
    console.log('Usuario Google autenticado:', userData);
    window.currentGoogleUser = userData;
    currentGoogleUser = userData;
@@ -5029,15 +5247,7 @@ let currentGoogleUser = null;
    requestDriveToken(true).then(() => {
      // Token obtained; do NOT auto-load backups from Drive on page refresh or sign-in.
      // Backups will only be loaded when the user explicitly clicks the "Cargar" button.
-     console.log('Drive token obtenido; carga de respaldos desde Drive se realizará solo con el botón "Cargar\" y Buscar.');
-  
-  // Enable Buscar button if user already restored from stored JWT earlier
-  try {
-    const searchBtn = document.getElementById('searchBackupsBtn');
-    if (window.currentGoogleUser && searchBtn) {
-      searchBtn.disabled = false;
-    }
-  } catch(e){}
+     console.log('Drive token obtenido; carga de respaldos desde Drive se realizará solo con el botón "Cargar".');
    }).catch(err => {
      console.warn('No se obtuvo token de Drive:', err);
    });
@@ -5291,192 +5501,3 @@ async function loadLatestBackupFromDrive() {
     alert('Ocurrió un error al cargar respaldo: ' + (err.message || err));
   }
 }
-
-// -------------------------
-// Buscar (listar y cargar) últimos 10 respaldos desde Drive
-// -------------------------
-async function listBackupsFromDrive() {
-  try {
-    if (!currentGoogleUser && !window.currentGoogleUser) {
-      alert('Debe iniciar sesión con Google para buscar respaldos.');
-      return [];
-    }
-
-    if (!driveAccessToken) {
-      await requestDriveToken(true);
-    }
-    if (!driveAccessToken) {
-      alert('No se pudo obtener token de acceso para Google Drive.');
-      return [];
-    }
-
-    const q = encodeURIComponent(`'1nyPnBXUbMRuSBUNd45K7EN9OLkxbaMNO' in parents and mimeType='application/json'`);
-    const fields = encodeURIComponent('files(id,name,createdTime)');
-    const listUrl = `https://www.googleapis.com/drive/v3/files?q=${q}&orderBy=createdTime desc&pageSize=10&fields=${fields}`;
-
-    const listRes = await fetch(listUrl, {
-      method: 'GET',
-      headers: { Authorization: 'Bearer ' + driveAccessToken }
-    });
-
-    if (!listRes.ok) {
-      const t = await listRes.text();
-      console.error('Error listando archivos en Drive:', listRes.status, t);
-      alert('Error listando respaldos en Drive: ' + listRes.statusText);
-      return [];
-    }
-
-    const listJson = await listRes.json();
-    return listJson.files || [];
-  } catch (err) {
-    console.error('Error listando backups:', err);
-    alert('Ocurrió un error al buscar respaldos: ' + (err.message || err));
-    return [];
-  }
-}
-
-function showSearchBackupsPanel() {
-  const panel = document.getElementById('searchBackupsPanel');
-  if (!panel) return;
-  panel.classList.toggle('show');
-}
-
-// Populate the floating search panel with last backups and wire selection to load them
-async function populateSearchBackupsPanel() {
-  const listEl = document.getElementById('searchBackupsList');
-  if (!listEl) return;
-
-  listEl.innerHTML = '<div style="color:#666;padding:8px">Cargando...</div>';
-  const files = await listBackupsFromDrive();
-  listEl.innerHTML = '';
-
-  if (!files || files.length === 0) {
-    listEl.innerHTML = '<div style="color:#999;padding:8px">No se encontraron respaldos</div>';
-    return;
-  }
-
-  files.slice(0, 10).forEach(file => {
-    const row = document.createElement('div');
-    row.style.display = 'flex';
-    row.style.justifyContent = 'space-between';
-    row.style.alignItems = 'center';
-    row.style.padding = '6px';
-    row.style.borderBottom = '1px solid #eee';
-    row.style.cursor = 'pointer';
-    row.style.background = '#fff';
-    row.title = file.name;
-
-    const left = document.createElement('div');
-    left.style.display = 'flex';
-    left.style.flexDirection = 'column';
-    left.style.gap = '2px';
-
-    const name = document.createElement('div');
-    name.textContent = file.name;
-    name.style.fontSize = '0.95em';
-    name.style.color = '#222';
-    name.style.fontWeight = '600';
-
-    const date = document.createElement('div');
-    const created = file.createdTime ? new Date(file.createdTime).toLocaleString() : '';
-    date.textContent = created;
-    date.style.fontSize = '0.8em';
-    date.style.color = '#666';
-
-    left.appendChild(name);
-    left.appendChild(date);
-
-    const btn = document.createElement('button');
-    btn.textContent = 'Cargar';
-    btn.style.background = '#27ae60';
-    btn.style.color = 'white';
-    btn.style.border = 'none';
-    btn.style.padding = '6px 8px';
-    btn.style.borderRadius = '6px';
-    btn.style.cursor = 'pointer';
-
-    btn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      if (!confirm(`¿Desea cargar el respaldo "${file.name}"? Esto reemplazará los datos actuales.`)) return;
-      try {
-        if (!driveAccessToken) await requestDriveToken(true);
-        const getUrl = `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`;
-        const getRes = await fetch(getUrl, { method: 'GET', headers: { Authorization: 'Bearer ' + driveAccessToken }});
-        if (!getRes.ok) {
-          const t = await getRes.text();
-          console.error('Error descargando respaldo:', getRes.status, t);
-          alert('Error descargando respaldo: ' + getRes.statusText);
-          return;
-        }
-        const state = await getRes.json();
-        restoreAppState(state);
-
-        // Update last backup name indicator
-        try {
-          localStorage.setItem('last_backup_name', file.name);
-          const el = document.getElementById('lastBackupName');
-          if (el) el.textContent = file.name;
-        } catch (e) { /* ignore */ }
-
-        // Close panel
-        const panelWrap = document.getElementById('searchBackupsPanel');
-        if (panelWrap) panelWrap.classList.remove('show');
-
-        alert(`Respaldo "${file.name}" cargado correctamente.`);
-      } catch (err) {
-        console.error('Error cargando respaldo seleccionado:', err);
-        alert('Ocurrió un error al cargar el respaldo: ' + (err.message || err));
-      }
-    });
-
-    row.appendChild(left);
-    row.appendChild(btn);
-
-    // clicking the row also triggers load confirm
-    row.addEventListener('click', () => btn.click());
-
-    listEl.appendChild(row);
-  });
-}
-
-// Wire Buscar button behavior: open panel (if signed) and populate; if not signed show message
-(function wireSearchBackupsButton(){
-  const searchBtn = document.getElementById('searchBackupsBtn');
-  const panel = document.getElementById('searchBackupsPanel');
-
-  if (!searchBtn || !panel) return;
-
-  // hide panel by default
-  panel.classList.remove('show');
-
-  searchBtn.addEventListener('click', async (e) => {
-    e.preventDefault();
-    // require google session
-    if (!currentGoogleUser && !window.currentGoogleUser) {
-      alert('Debe iniciar sesión con Google para buscar respaldos.');
-      return;
-    }
-    // ensure drive token
-    if (!driveAccessToken) {
-      try {
-        await requestDriveToken(true);
-      } catch (err) {
-        console.warn('No se obtuvo token de Drive al intentar listar backups:', err);
-      }
-    }
-    // toggle and populate when showing
-    if (!panel.classList.contains('show')) {
-      panel.classList.add('show');
-      await populateSearchBackupsPanel();
-    } else {
-      panel.classList.remove('show');
-    }
-  });
-
-  // click outside to close
-  document.addEventListener('click', (ev) => {
-    if (!searchBtn.contains(ev.target) && !panel.contains(ev.target)) {
-      panel.classList.remove('show');
-    }
-  });
-})();

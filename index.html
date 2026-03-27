@@ -96,20 +96,13 @@
             <div id="lastBackupContainer" style="color:#ddd;font-size:0.85em;min-width:220px;">
               Último respaldo cargado: <span id="lastBackupName" style="font-weight:700;color:#fff;">(ninguno)</span>
             </div>
-            <div style="flex:0 0 auto; display:flex; gap:8px; align-items:center; position:relative;">
-              <div class="backup-dropdown" style="position:relative;">
+            <div style="flex:0 0 auto; display:flex; gap:8px; align-items:center;">
+              <button id="searchBtn" class="backup-btn">Buscar</button>
+              <div class="backup-dropdown">
                 <button id="backupButton" class="backup-btn">Respaldo</button>
                 <div id="backupDropdown" class="backup-options">
                   <button id="backupSave" class="backup-option">Respaldar</button>
                   <button id="backupRestore" class="backup-option">Restaurar</button>
-                </div>
-              </div>
-
-              <!-- New Buscar button and floating panel -->
-              <div class="backup-dropdown" style="position:relative;">
-                <button id="searchBackupsBtn" class="backup-btn" disabled>Buscar</button>
-                <div id="searchBackupsPanel" class="backup-options" style="min-width:260px; max-height:320px; overflow:auto;">
-                  <div id="searchBackupsList" style="display:flex;flex-direction:column;gap:6px;padding:8px;color:#333;"></div>
                 </div>
               </div>
             </div>
