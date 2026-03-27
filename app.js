@@ -1,3 +1,26 @@
+ // Modelo de datos actualizado
+ // Ensure removal of the visible "Ocultar" button won't break existing listeners:
+ // if the HTML button is removed we still create a hidden stub so legacy code that queries
+ // #hideButton and attaches listeners doesn't throw when executed.
+ (function ensureHideButtonStub(){
+   if (!document.getElementById('hideButton')) {
+     try {
+       const hb = document.createElement('button');
+       hb.id = 'hideButton';
+       hb.style.display = 'none';
+       // attach to body so DOM lookups succeed; listeners can safely be added to this stub
+       document.addEventListener('DOMContentLoaded', () => {
+         document.body.appendChild(hb);
+       });
+       // If DOM already loaded, append immediately
+       if (document.readyState !== 'loading') document.body.appendChild(hb);
+     } catch (err) {
+       // fail silently if DOM not ready or append fails
+       console.warn('Could not create hideButton stub', err);
+     }
+   }
+ })();
+
 // Modelo de datos actualizado
 let accounts = {
   Efectivo: {
@@ -2192,107 +2215,99 @@ function toggleDailyPaymentStatus(date) {
 const backupBtn = document.getElementById('backupButton');
 const backupDropdown = document.getElementById('backupDropdown');
 
-if (backupBtn && backupDropdown) {
-  backupBtn.addEventListener('click', () => {
-    backupDropdown.classList.toggle('show');
-  });
+backupBtn.addEventListener('click', () => {
+  backupDropdown.classList.toggle('show');
+});
 
-  document.addEventListener('click', (e) => {
-    if (!backupBtn.contains(e.target) && !backupDropdown.contains(e.target)) {
-      backupDropdown.classList.remove('show');
-    }
-  });
-}
+document.addEventListener('click', (e) => {
+  if (!backupBtn.contains(e.target) && !backupDropdown.contains(e.target)) {
+    backupDropdown.classList.remove('show');
+  }
+});
 
-const backupSaveEl = document.getElementById('backupSave') || document.querySelector('.backup-option[data-action="save"]');
-if (backupSaveEl) {
-  backupSaveEl.addEventListener('click', () => {
-    const data = {
-      accounts,
-      transactions,
-      accountsOrder,
-      transactionsOrder,
-      salonSales,
-      commissionRates,
-      ivaRate,
-      salesBoletas,
-      figaroIndicators
-    };
+document.getElementById('backupSave').addEventListener('click', () => {
+  const data = {
+    accounts,
+    transactions,
+    accountsOrder,
+    transactionsOrder,
+    salonSales,
+    commissionRates,
+    ivaRate,
+    salesBoletas,
+    figaroIndicators
+  };
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `finanzas_backup_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    if (typeof backupDropdown !== 'undefined' && backupDropdown) backupDropdown.classList.remove('show');
-  });
-}
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `finanzas_backup_${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  backupDropdown.classList.remove('show');
+});
 
-const backupRestoreEl = document.getElementById('backupRestore') || document.querySelector('.backup-option[data-action="restore"]');
-if (backupRestoreEl) {
-  backupRestoreEl.addEventListener('click', () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
+document.getElementById('backupRestore').addEventListener('click', () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
 
-    input.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+  input.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const data = JSON.parse(event.target.result);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
 
-          if (!data.accounts || !data.transactions || !data.accountsOrder || !data.transactionsOrder) {
-            throw new Error('Formato de respaldo inválido: faltan datos financieros');
-          }
-
-          accounts = data.accounts;
-          transactions = data.transactions;
-          accountsOrder = data.accountsOrder;
-          transactionsOrder = data.transactionsOrder;
-
-          if (data.salonSales) salonSales = data.salonSales;
-          if (data.commissionRates) commissionRates = data.commissionRates;
-          if (data.ivaRate) ivaRate = data.ivaRate;
-          if (data.salesBoletas) salesBoletas = data.salesBoletas;
-          if (data.figaroIndicators) figaroIndicators = data.figaroIndicators;
-
-          updateTotalBalance();
-          updateAccountsList();
-          updateTransactionsList();
-          updateAccountSelectors();
-          updateSalonSalesDisplay();
-          
-          saveToLocalStorage();
-          saveSalonToLocalStorage();
-
-          // Persist and show the filename of the restored backup
-          try {
-            if (file && file.name) {
-              localStorage.setItem('last_backup_name', file.name);
-              const el = document.getElementById('lastBackupName');
-              if (el) el.textContent = file.name;
-            }
-          } catch (e) { /* ignore storage/display errors */ }
-
-          alert('Respaldo restaurado exitosamente');
-        } catch (error) {
-          alert('Error al restaurar el respaldo: ' + error.message);
+        if (!data.accounts || !data.transactions || !data.accountsOrder || !data.transactionsOrder) {
+          throw new Error('Formato de respaldo inválido: faltan datos financieros');
         }
-      };
-      reader.readAsText(file);
-    });
 
-    input.click();
-    if (typeof backupDropdown !== 'undefined' && backupDropdown) backupDropdown.classList.remove('show');
+        accounts = data.accounts;
+        transactions = data.transactions;
+        accountsOrder = data.accountsOrder;
+        transactionsOrder = data.transactionsOrder;
+
+        if (data.salonSales) salonSales = data.salonSales;
+        if (data.commissionRates) commissionRates = data.commissionRates;
+        if (data.ivaRate) ivaRate = data.ivaRate;
+        if (data.salesBoletas) salesBoletas = data.salesBoletas;
+        if (data.figaroIndicators) figaroIndicators = data.figaroIndicators;
+
+        updateTotalBalance();
+        updateAccountsList();
+        updateTransactionsList();
+        updateAccountSelectors();
+        updateSalonSalesDisplay();
+        
+        saveToLocalStorage();
+        saveSalonToLocalStorage();
+
+        // Persist and show the filename of the restored backup
+        try {
+          if (file && file.name) {
+            localStorage.setItem('last_backup_name', file.name);
+            const el = document.getElementById('lastBackupName');
+            if (el) el.textContent = file.name;
+          }
+        } catch (e) { /* ignore storage/display errors */ }
+
+        alert('Respaldo restaurado exitosamente');
+      } catch (error) {
+        alert('Error al restaurar el respaldo: ' + error.message);
+      }
+    };
+    reader.readAsText(file);
   });
-}
+
+  input.click();
+  backupDropdown.classList.remove('show');
+});
 
 function saveSalonToLocalStorage() {
   localStorage.setItem('figaro_sales', JSON.stringify(salonSales));
@@ -2302,131 +2317,6 @@ function saveSalonToLocalStorage() {
   localStorage.setItem('sales_boletas', JSON.stringify(salesBoletas));
   localStorage.setItem('figaro_indicators', JSON.stringify(figaroIndicators));
 }
-
-// ------------------------------
-// Backup Search panel + Drive helpers
-// ------------------------------
-async function fetchLastBackupsFromGoogleDrive(limit = 10) {
-  // Returns array [{id, name, modifiedTime}, ...] or empty array
-  try {
-    // Ensure token
-    if (!driveAccessToken) {
-      await requestDriveToken(true).catch(() => {});
-    }
-    if (!driveAccessToken) return [];
-
-    const folderId = '1nyPnBXUbMRuSBUNd45K7EN9OLkxbaMNO';
-    const q = encodeURIComponent(`'${folderId}' in parents and mimeType='application/json'`);
-    const fields = encodeURIComponent('files(id,name,modifiedTime)');
-    const url = `https://www.googleapis.com/drive/v3/files?q=${q}&orderBy=modifiedTime desc&pageSize=${limit}&fields=${fields}`;
-
-    const res = await fetch(url, {
-      headers: { Authorization: 'Bearer ' + driveAccessToken }
-    });
-
-    if (!res.ok) {
-      console.warn('fetchLastBackupsFromGoogleDrive failed', res.status);
-      return [];
-    }
-    const json = await res.json();
-    return (json.files || []).map(f => ({ id: f.id, name: f.name, modifiedTime: f.modifiedTime }));
-  } catch (err) {
-    console.error('fetchLastBackupsFromGoogleDrive error', err);
-    return [];
-  }
-}
-
-function renderBackupResults(backups, listElement) {
-  if (!listElement) return;
-  listElement.innerHTML = '';
-  if (!backups || backups.length === 0) {
-    const li = document.createElement('li');
-    li.className = 'backup-result-item';
-    li.textContent = 'No se encontraron respaldos';
-    listElement.appendChild(li);
-    return;
-  }
-  backups.forEach(backup => {
-    const li = document.createElement('li');
-    li.className = 'backup-result-item';
-    li.textContent = `${backup.name} – ${new Date(backup.modifiedTime).toLocaleString()}`;
-    li.dataset.backupId = backup.id;
-    li.addEventListener('click', () => {
-      loadBackupFromGoogleDrive(backup.id);
-    });
-    listElement.appendChild(li);
-  });
-}
-
-async function loadBackupFromGoogleDrive(backupId) {
-  try {
-    if (!backupId) return;
-    if (!driveAccessToken) {
-      await requestDriveToken(true).catch(() => {});
-    }
-    if (!driveAccessToken) {
-      alert('No se pudo obtener token para descargar el respaldo.');
-      return;
-    }
-
-    const url = `https://www.googleapis.com/drive/v3/files/${backupId}?alt=media`;
-    const res = await fetch(url, { headers: { Authorization: 'Bearer ' + driveAccessToken } });
-    if (!res.ok) {
-      alert('Error descargando respaldo: ' + res.statusText);
-      return;
-    }
-    const state = await res.json();
-    // reuse restoreAppState to apply the loaded backup
-    if (typeof restoreAppState === 'function') {
-      restoreAppState(state);
-      try {
-        if (state && state._backupFilename) {
-          localStorage.setItem('last_backup_name', state._backupFilename);
-          const el = document.getElementById('lastBackupName');
-          if (el) el.textContent = state._backupFilename;
-        }
-      } catch (e) { /* ignore */ }
-      alert('Respaldo cargado correctamente desde Drive.');
-    } else {
-      alert('Función de restauración no disponible.');
-    }
-  } catch (err) {
-    console.error('loadBackupFromGoogleDrive error', err);
-    alert('Error cargando respaldo: ' + (err.message || err));
-  }
-}
-
- // Wire up the search button and panel safely after DOM loaded
-document.addEventListener('DOMContentLoaded', () => {
-  const backupSearchBtn = document.getElementById('backupSearchBtn');
-  const backupResultsPanel = document.getElementById('backupResultsPanel');
-  const backupResultsList = document.getElementById('backupResultsList');
-
-  if (backupSearchBtn) {
-    // Start disabled until a Google user is confirmed
-    backupSearchBtn.disabled = true;
-    backupSearchBtn.title = 'Inicie sesión con Google para usar Buscar';
-  }
-
-  if (backupSearchBtn && backupResultsPanel && backupResultsList) {
-    backupSearchBtn.addEventListener('click', async () => {
-      // Prevent action if no Google user session exists
-      if (!currentGoogleUser && !window.currentGoogleUser) {
-        alert('Debe iniciar sesión con Google para buscar respaldos en Drive.');
-        return;
-      }
-
-      const nowVisible = backupResultsPanel.classList.toggle('hidden') ? true : false;
-      // aria-hidden toggle for accessibility
-      backupResultsPanel.setAttribute('aria-hidden', String(backupResultsPanel.classList.contains('hidden')));
-      // If panel was just shown, load last backups
-      if (!backupResultsPanel.classList.contains('hidden')) {
-        const backups = await fetchLastBackupsFromGoogleDrive(10);
-        renderBackupResults(backups, backupResultsList);
-      }
-    });
-  }
-});
 
 function loadSalonFromLocalStorage() {
   const savedSales = localStorage.getItem('figaro_sales');
@@ -2554,21 +2444,19 @@ let currentInput = '';
 let currentOperation = null;
 let previousInput = null;
 
-if (showCalculatorBtn && backToTransactionBtn && transactionPanel && calculatorPanel && calculatorInput) {
-  showCalculatorBtn.addEventListener('click', () => {
-    transactionPanel.style.display = 'none';
-    calculatorPanel.style.display = 'block';
-    calculatorInput.value = '';
-    currentInput = '';
-    currentOperation = null;
-    previousInput = null;
-  });
+showCalculatorBtn.addEventListener('click', () => {
+  transactionPanel.style.display = 'none';
+  calculatorPanel.style.display = 'block';
+  calculatorInput.value = '';
+  currentInput = '';
+  currentOperation = null;
+  previousInput = null;
+});
 
-  backToTransactionBtn.addEventListener('click', () => {
-    calculatorPanel.style.display = 'none';
-    transactionPanel.style.display = 'block';
-  });
-}
+backToTransactionBtn.addEventListener('click', () => {
+  calculatorPanel.style.display = 'none';
+  transactionPanel.style.display = 'block';
+});
 
 function calculate() {
   if (previousInput === null || currentOperation === null) return;
@@ -4638,10 +4526,7 @@ function showTCRProjection() {
   };
 }
 
-const proyTCRBtn = document.getElementById('proyTCR');
-if (proyTCRBtn) {
-  proyTCRBtn.addEventListener('click', showTCRProjection);
-}
+document.getElementById('proyTCR').onclick = showTCRProjection;
 
 // Totales TCR modal logic
 (function(){
@@ -5113,7 +4998,7 @@ let currentGoogleUser = null;
    const btn = document.getElementById('googleSignInButton');
    const info = document.getElementById('googleUserInfo');
    const signOutBtn = document.getElementById('googleSignOutBtn');
-   const backupSearchBtn = document.getElementById('backupSearchBtn');
+   const buscarBtn = document.getElementById('buscarBtn');
 
    if (btn) btn.style.display = 'none';
    if (info) {
@@ -5132,13 +5017,15 @@ let currentGoogleUser = null;
        if (info) { info.style.display = 'none'; info.textContent = ''; }
        if (btn) { btn.style.display = 'inline-block'; }
        signOutBtn.style.display = 'none';
-
-       // Disable Buscar button on sign out
-       if (backupSearchBtn) {
-         backupSearchBtn.disabled = true;
-         backupSearchBtn.title = 'Inicie sesión con Google para usar Buscar';
+       // disable Buscar UI if present
+       try {
+         const buscarPanel = document.getElementById('buscarDropdown');
+         if (buscarPanel) buscarPanel.remove();
+       } catch (e) {}
+       if (buscarBtn) {
+         buscarBtn.disabled = true;
+         buscarBtn.classList.remove('active');
        }
-
        try {
          if (google && google.accounts && google.accounts.id && google.accounts.id.disableAutoSelect) {
            google.accounts.id.disableAutoSelect();
@@ -5149,9 +5036,116 @@ let currentGoogleUser = null;
    }
 
    // Enable Buscar button now that user is logged in
-   if (backupSearchBtn) {
-     backupSearchBtn.disabled = false;
-     backupSearchBtn.title = '';
+   try {
+     if (buscarBtn) {
+       buscarBtn.disabled = false;
+       // create dropdown container if not exists
+       if (!document.getElementById('buscarDropdown')) {
+         const panel = document.createElement('div');
+         panel.id = 'buscarDropdown';
+         panel.className = 'buscar-dropdown';
+         panel.style.display = 'none';
+         panel.innerHTML = '<div class="buscar-list">Cargando...</div>';
+         document.body.appendChild(panel);
+       }
+       buscarBtn.onclick = async (e) => {
+         e.stopPropagation();
+         // Toggle panel
+         const panel = document.getElementById('buscarDropdown');
+         if (!panel) return;
+         if (panel.style.display === 'block') {
+           panel.style.display = 'none';
+           return;
+         }
+         // position below button
+         const rect = buscarBtn.getBoundingClientRect();
+         panel.style.position = 'absolute';
+         panel.style.left = `${rect.left}px`;
+         panel.style.top = `${rect.bottom + window.scrollY + 6}px`;
+         panel.style.minWidth = `${rect.width}px`;
+         panel.style.display = 'block';
+         panel.innerHTML = '<div class="buscar-list">Cargando...</div>';
+
+         try {
+           if (!driveAccessToken) {
+             await requestDriveToken(true);
+           }
+           if (!driveAccessToken) throw new Error('No drive token');
+           // list last 10 json files in folder
+           const q = encodeURIComponent(`'1nyPnBXUbMRuSBUNd45K7EN9OLkxbaMNO' in parents and mimeType='application/json'`);
+           const fields = encodeURIComponent('files(id,name,createdTime)');
+           const listUrl = `https://www.googleapis.com/drive/v3/files?q=${q}&orderBy=createdTime desc&pageSize=10&fields=${fields}`;
+           const listRes = await fetch(listUrl, {
+             method: 'GET',
+             headers: { Authorization: 'Bearer ' + driveAccessToken }
+           });
+           if (!listRes.ok) {
+             throw new Error('Error listando archivos: ' + listRes.statusText);
+           }
+           const listJson = await listRes.json();
+           const files = listJson.files || [];
+           const listEl = document.createElement('div');
+           listEl.className = 'buscar-list';
+           if (files.length === 0) {
+             listEl.innerHTML = '<div class="buscar-empty">No se encontraron respaldos en Drive</div>';
+           } else {
+             files.forEach(f => {
+               const item = document.createElement('button');
+               item.className = 'buscar-item';
+               item.type = 'button';
+               item.textContent = `${f.name}`;
+               item.onclick = async () => {
+                 // fetch file content
+                 try {
+                   const getUrl = `https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`;
+                   const getRes = await fetch(getUrl, {
+                     method: 'GET',
+                     headers: { Authorization: 'Bearer ' + driveAccessToken }
+                   });
+                   if (!getRes.ok) {
+                     alert('Error descargando respaldo: ' + getRes.statusText);
+                     return;
+                   }
+                   const state = await getRes.json();
+                   restoreAppState(state);
+                   // persist and update UI indicator
+                   try {
+                     localStorage.setItem('last_backup_name', f.name);
+                     const el = document.getElementById('lastBackupName');
+                     if (el) el.textContent = f.name;
+                   } catch (e) {}
+                   // close panel
+                   panel.style.display = 'none';
+                   alert(`Respaldo "${f.name}" cargado correctamente.`);
+                 } catch (err) {
+                   console.error(err);
+                   alert('Error cargando respaldo: ' + (err.message || err));
+                 }
+               };
+               listEl.appendChild(item);
+             });
+           }
+           panel.innerHTML = '';
+           panel.appendChild(listEl);
+         } catch (err) {
+           console.error('Error buscando respaldos:', err);
+           const panel = document.getElementById('buscarDropdown');
+           if (panel) panel.innerHTML = `<div class="buscar-error">Error al listar respaldos</div>`;
+         }
+       };
+       // allow clicking outside to close
+       document.addEventListener('click', (ev) => {
+         const panel = document.getElementById('buscarDropdown');
+         if (!panel) return;
+         if (panel.style.display === 'block') {
+           const target = ev.target;
+           if (target === buscarBtn || buscarBtn.contains(target) || panel.contains(target)) return;
+           panel.style.display = 'none';
+         }
+       });
+     }
+   } catch (err) {
+     console.warn('No se pudo habilitar buscarBtn:', err);
    }
 
    // Request Drive access token (consent prompt first time)

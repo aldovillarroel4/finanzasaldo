@@ -3813,46 +3813,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: #bbb;
 }
 
-/* New styles for backup results panel */
-.backup-results-panel {
-  /* position the panel absolutely inside the wrapper so it appears directly under the button */
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  width: 300px;
-  background: rgba(0, 0, 0, 0.85);
-  padding: 10px;
-  border-radius: 6px;
-  max-height: 260px;
-  overflow-y: auto;
-  border: 1px solid rgba(255,255,255,0.06);
-  z-index: 1200;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.45);
-}
-
-.backup-results-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.backup-result-item {
-  padding: 8px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  cursor: pointer;
-  color: #fff;
-  font-size: 0.95em;
-}
-
-.backup-result-item:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-/* Utility hidden class */
-.hidden {
-  display: none !important;
-}
-
 .tcr-grid-container {
   margin-top: 15px;
   overflow: auto;
