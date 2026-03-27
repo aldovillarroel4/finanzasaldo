@@ -2192,99 +2192,107 @@ function toggleDailyPaymentStatus(date) {
 const backupBtn = document.getElementById('backupButton');
 const backupDropdown = document.getElementById('backupDropdown');
 
-backupBtn.addEventListener('click', () => {
-  backupDropdown.classList.toggle('show');
-});
-
-document.addEventListener('click', (e) => {
-  if (!backupBtn.contains(e.target) && !backupDropdown.contains(e.target)) {
-    backupDropdown.classList.remove('show');
-  }
-});
-
-document.getElementById('backupSave').addEventListener('click', () => {
-  const data = {
-    accounts,
-    transactions,
-    accountsOrder,
-    transactionsOrder,
-    salonSales,
-    commissionRates,
-    ivaRate,
-    salesBoletas,
-    figaroIndicators
-  };
-
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `finanzas_backup_${new Date().toISOString().split('T')[0]}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  backupDropdown.classList.remove('show');
-});
-
-document.getElementById('backupRestore').addEventListener('click', () => {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
-
-  input.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const data = JSON.parse(event.target.result);
-
-        if (!data.accounts || !data.transactions || !data.accountsOrder || !data.transactionsOrder) {
-          throw new Error('Formato de respaldo inválido: faltan datos financieros');
-        }
-
-        accounts = data.accounts;
-        transactions = data.transactions;
-        accountsOrder = data.accountsOrder;
-        transactionsOrder = data.transactionsOrder;
-
-        if (data.salonSales) salonSales = data.salonSales;
-        if (data.commissionRates) commissionRates = data.commissionRates;
-        if (data.ivaRate) ivaRate = data.ivaRate;
-        if (data.salesBoletas) salesBoletas = data.salesBoletas;
-        if (data.figaroIndicators) figaroIndicators = data.figaroIndicators;
-
-        updateTotalBalance();
-        updateAccountsList();
-        updateTransactionsList();
-        updateAccountSelectors();
-        updateSalonSalesDisplay();
-        
-        saveToLocalStorage();
-        saveSalonToLocalStorage();
-
-        // Persist and show the filename of the restored backup
-        try {
-          if (file && file.name) {
-            localStorage.setItem('last_backup_name', file.name);
-            const el = document.getElementById('lastBackupName');
-            if (el) el.textContent = file.name;
-          }
-        } catch (e) { /* ignore storage/display errors */ }
-
-        alert('Respaldo restaurado exitosamente');
-      } catch (error) {
-        alert('Error al restaurar el respaldo: ' + error.message);
-      }
-    };
-    reader.readAsText(file);
+if (backupBtn && backupDropdown) {
+  backupBtn.addEventListener('click', () => {
+    backupDropdown.classList.toggle('show');
   });
 
-  input.click();
-  backupDropdown.classList.remove('show');
-});
+  document.addEventListener('click', (e) => {
+    if (!backupBtn.contains(e.target) && !backupDropdown.contains(e.target)) {
+      backupDropdown.classList.remove('show');
+    }
+  });
+}
+
+const backupSaveEl = document.getElementById('backupSave') || document.querySelector('.backup-option[data-action="save"]');
+if (backupSaveEl) {
+  backupSaveEl.addEventListener('click', () => {
+    const data = {
+      accounts,
+      transactions,
+      accountsOrder,
+      transactionsOrder,
+      salonSales,
+      commissionRates,
+      ivaRate,
+      salesBoletas,
+      figaroIndicators
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `finanzas_backup_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    if (typeof backupDropdown !== 'undefined' && backupDropdown) backupDropdown.classList.remove('show');
+  });
+}
+
+const backupRestoreEl = document.getElementById('backupRestore') || document.querySelector('.backup-option[data-action="restore"]');
+if (backupRestoreEl) {
+  backupRestoreEl.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+
+    input.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = JSON.parse(event.target.result);
+
+          if (!data.accounts || !data.transactions || !data.accountsOrder || !data.transactionsOrder) {
+            throw new Error('Formato de respaldo inválido: faltan datos financieros');
+          }
+
+          accounts = data.accounts;
+          transactions = data.transactions;
+          accountsOrder = data.accountsOrder;
+          transactionsOrder = data.transactionsOrder;
+
+          if (data.salonSales) salonSales = data.salonSales;
+          if (data.commissionRates) commissionRates = data.commissionRates;
+          if (data.ivaRate) ivaRate = data.ivaRate;
+          if (data.salesBoletas) salesBoletas = data.salesBoletas;
+          if (data.figaroIndicators) figaroIndicators = data.figaroIndicators;
+
+          updateTotalBalance();
+          updateAccountsList();
+          updateTransactionsList();
+          updateAccountSelectors();
+          updateSalonSalesDisplay();
+          
+          saveToLocalStorage();
+          saveSalonToLocalStorage();
+
+          // Persist and show the filename of the restored backup
+          try {
+            if (file && file.name) {
+              localStorage.setItem('last_backup_name', file.name);
+              const el = document.getElementById('lastBackupName');
+              if (el) el.textContent = file.name;
+            }
+          } catch (e) { /* ignore storage/display errors */ }
+
+          alert('Respaldo restaurado exitosamente');
+        } catch (error) {
+          alert('Error al restaurar el respaldo: ' + error.message);
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    input.click();
+    if (typeof backupDropdown !== 'undefined' && backupDropdown) backupDropdown.classList.remove('show');
+  });
+}
 
 function saveSalonToLocalStorage() {
   localStorage.setItem('figaro_sales', JSON.stringify(salonSales));
@@ -2294,6 +2302,131 @@ function saveSalonToLocalStorage() {
   localStorage.setItem('sales_boletas', JSON.stringify(salesBoletas));
   localStorage.setItem('figaro_indicators', JSON.stringify(figaroIndicators));
 }
+
+// ------------------------------
+// Backup Search panel + Drive helpers
+// ------------------------------
+async function fetchLastBackupsFromGoogleDrive(limit = 10) {
+  // Returns array [{id, name, modifiedTime}, ...] or empty array
+  try {
+    // Ensure token
+    if (!driveAccessToken) {
+      await requestDriveToken(true).catch(() => {});
+    }
+    if (!driveAccessToken) return [];
+
+    const folderId = '1nyPnBXUbMRuSBUNd45K7EN9OLkxbaMNO';
+    const q = encodeURIComponent(`'${folderId}' in parents and mimeType='application/json'`);
+    const fields = encodeURIComponent('files(id,name,modifiedTime)');
+    const url = `https://www.googleapis.com/drive/v3/files?q=${q}&orderBy=modifiedTime desc&pageSize=${limit}&fields=${fields}`;
+
+    const res = await fetch(url, {
+      headers: { Authorization: 'Bearer ' + driveAccessToken }
+    });
+
+    if (!res.ok) {
+      console.warn('fetchLastBackupsFromGoogleDrive failed', res.status);
+      return [];
+    }
+    const json = await res.json();
+    return (json.files || []).map(f => ({ id: f.id, name: f.name, modifiedTime: f.modifiedTime }));
+  } catch (err) {
+    console.error('fetchLastBackupsFromGoogleDrive error', err);
+    return [];
+  }
+}
+
+function renderBackupResults(backups, listElement) {
+  if (!listElement) return;
+  listElement.innerHTML = '';
+  if (!backups || backups.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'backup-result-item';
+    li.textContent = 'No se encontraron respaldos';
+    listElement.appendChild(li);
+    return;
+  }
+  backups.forEach(backup => {
+    const li = document.createElement('li');
+    li.className = 'backup-result-item';
+    li.textContent = `${backup.name} – ${new Date(backup.modifiedTime).toLocaleString()}`;
+    li.dataset.backupId = backup.id;
+    li.addEventListener('click', () => {
+      loadBackupFromGoogleDrive(backup.id);
+    });
+    listElement.appendChild(li);
+  });
+}
+
+async function loadBackupFromGoogleDrive(backupId) {
+  try {
+    if (!backupId) return;
+    if (!driveAccessToken) {
+      await requestDriveToken(true).catch(() => {});
+    }
+    if (!driveAccessToken) {
+      alert('No se pudo obtener token para descargar el respaldo.');
+      return;
+    }
+
+    const url = `https://www.googleapis.com/drive/v3/files/${backupId}?alt=media`;
+    const res = await fetch(url, { headers: { Authorization: 'Bearer ' + driveAccessToken } });
+    if (!res.ok) {
+      alert('Error descargando respaldo: ' + res.statusText);
+      return;
+    }
+    const state = await res.json();
+    // reuse restoreAppState to apply the loaded backup
+    if (typeof restoreAppState === 'function') {
+      restoreAppState(state);
+      try {
+        if (state && state._backupFilename) {
+          localStorage.setItem('last_backup_name', state._backupFilename);
+          const el = document.getElementById('lastBackupName');
+          if (el) el.textContent = state._backupFilename;
+        }
+      } catch (e) { /* ignore */ }
+      alert('Respaldo cargado correctamente desde Drive.');
+    } else {
+      alert('Función de restauración no disponible.');
+    }
+  } catch (err) {
+    console.error('loadBackupFromGoogleDrive error', err);
+    alert('Error cargando respaldo: ' + (err.message || err));
+  }
+}
+
+ // Wire up the search button and panel safely after DOM loaded
+document.addEventListener('DOMContentLoaded', () => {
+  const backupSearchBtn = document.getElementById('backupSearchBtn');
+  const backupResultsPanel = document.getElementById('backupResultsPanel');
+  const backupResultsList = document.getElementById('backupResultsList');
+
+  if (backupSearchBtn) {
+    // Start disabled until a Google user is confirmed
+    backupSearchBtn.disabled = true;
+    backupSearchBtn.title = 'Inicie sesión con Google para usar Buscar';
+  }
+
+  if (backupSearchBtn && backupResultsPanel && backupResultsList) {
+    backupSearchBtn.addEventListener('click', async () => {
+      // Prevent action if no Google user session exists
+      if (!currentGoogleUser && !window.currentGoogleUser) {
+        alert('Debe iniciar sesión con Google para buscar respaldos en Drive.');
+        return;
+      }
+
+      const nowVisible = backupResultsPanel.classList.toggle('hidden') ? true : false;
+      // aria-hidden toggle for accessibility
+      backupResultsPanel.setAttribute('aria-hidden', String(backupResultsPanel.classList.contains('hidden')));
+      // If panel was just shown, load last backups
+      if (!backupResultsPanel.classList.contains('hidden')) {
+        const backups = await fetchLastBackupsFromGoogleDrive(10);
+        renderBackupResults(backups, backupResultsList);
+      }
+    });
+  }
+});
 
 function loadSalonFromLocalStorage() {
   const savedSales = localStorage.getItem('figaro_sales');
@@ -2421,19 +2554,21 @@ let currentInput = '';
 let currentOperation = null;
 let previousInput = null;
 
-showCalculatorBtn.addEventListener('click', () => {
-  transactionPanel.style.display = 'none';
-  calculatorPanel.style.display = 'block';
-  calculatorInput.value = '';
-  currentInput = '';
-  currentOperation = null;
-  previousInput = null;
-});
+if (showCalculatorBtn && backToTransactionBtn && transactionPanel && calculatorPanel && calculatorInput) {
+  showCalculatorBtn.addEventListener('click', () => {
+    transactionPanel.style.display = 'none';
+    calculatorPanel.style.display = 'block';
+    calculatorInput.value = '';
+    currentInput = '';
+    currentOperation = null;
+    previousInput = null;
+  });
 
-backToTransactionBtn.addEventListener('click', () => {
-  calculatorPanel.style.display = 'none';
-  transactionPanel.style.display = 'block';
-});
+  backToTransactionBtn.addEventListener('click', () => {
+    calculatorPanel.style.display = 'none';
+    transactionPanel.style.display = 'block';
+  });
+}
 
 function calculate() {
   if (previousInput === null || currentOperation === null) return;
@@ -4503,7 +4638,10 @@ function showTCRProjection() {
   };
 }
 
-document.getElementById('proyTCR').onclick = showTCRProjection;
+const proyTCRBtn = document.getElementById('proyTCR');
+if (proyTCRBtn) {
+  proyTCRBtn.addEventListener('click', showTCRProjection);
+}
 
 // Totales TCR modal logic
 (function(){
@@ -4975,6 +5113,8 @@ let currentGoogleUser = null;
    const btn = document.getElementById('googleSignInButton');
    const info = document.getElementById('googleUserInfo');
    const signOutBtn = document.getElementById('googleSignOutBtn');
+   const backupSearchBtn = document.getElementById('backupSearchBtn');
+
    if (btn) btn.style.display = 'none';
    if (info) {
      info.style.display = 'block';
@@ -4992,6 +5132,13 @@ let currentGoogleUser = null;
        if (info) { info.style.display = 'none'; info.textContent = ''; }
        if (btn) { btn.style.display = 'inline-block'; }
        signOutBtn.style.display = 'none';
+
+       // Disable Buscar button on sign out
+       if (backupSearchBtn) {
+         backupSearchBtn.disabled = true;
+         backupSearchBtn.title = 'Inicie sesión con Google para usar Buscar';
+       }
+
        try {
          if (google && google.accounts && google.accounts.id && google.accounts.id.disableAutoSelect) {
            google.accounts.id.disableAutoSelect();
@@ -4999,6 +5146,12 @@ let currentGoogleUser = null;
        } catch (err) { /* ignore if not available */ }
        alert('Sesión cerrada.');
      };
+   }
+
+   // Enable Buscar button now that user is logged in
+   if (backupSearchBtn) {
+     backupSearchBtn.disabled = false;
+     backupSearchBtn.title = '';
    }
 
    // Request Drive access token (consent prompt first time)
