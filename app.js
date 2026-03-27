@@ -4999,7 +4999,6 @@ let currentGoogleUser = null;
    const info = document.getElementById('googleUserInfo');
    const signOutBtn = document.getElementById('googleSignOutBtn');
    const buscarBtn = document.getElementById('buscarBtn');
-
    if (btn) btn.style.display = 'none';
    if (info) {
      info.style.display = 'block';
@@ -5017,14 +5016,11 @@ let currentGoogleUser = null;
        if (info) { info.style.display = 'none'; info.textContent = ''; }
        if (btn) { btn.style.display = 'inline-block'; }
        signOutBtn.style.display = 'none';
-       // disable Buscar UI if present
-       try {
-         const buscarPanel = document.getElementById('buscarDropdown');
-         if (buscarPanel) buscarPanel.remove();
-       } catch (e) {}
+       // disable Buscar and hide its dropdown when signing out
        if (buscarBtn) {
          buscarBtn.disabled = true;
-         buscarBtn.classList.remove('active');
+         const buscarDropdown = document.getElementById('buscarDropdown');
+         if (buscarDropdown) buscarDropdown.style.display = 'none';
        }
        try {
          if (google && google.accounts && google.accounts.id && google.accounts.id.disableAutoSelect) {
@@ -5035,117 +5031,91 @@ let currentGoogleUser = null;
      };
    }
 
-   // Enable Buscar button now that user is logged in
+   // Enable Buscar button and wire its click behavior
    try {
+     const buscarBtn = document.getElementById('buscarBtn');
      if (buscarBtn) {
        buscarBtn.disabled = false;
-       // create dropdown container if not exists
-       if (!document.getElementById('buscarDropdown')) {
-         const panel = document.createElement('div');
-         panel.id = 'buscarDropdown';
-         panel.className = 'buscar-dropdown';
-         panel.style.display = 'none';
-         panel.innerHTML = '<div class="buscar-list">Cargando...</div>';
-         document.body.appendChild(panel);
-       }
-       buscarBtn.onclick = async (e) => {
+       buscarBtn.addEventListener('click', async (e) => {
          e.stopPropagation();
-         // Toggle panel
-         const panel = document.getElementById('buscarDropdown');
-         if (!panel) return;
-         if (panel.style.display === 'block') {
-           panel.style.display = 'none';
+         // toggle dropdown visibility
+         const buscarDropdown = document.getElementById('buscarDropdown');
+         if (!buscarDropdown) return;
+         if (buscarDropdown.style.display === 'block') {
+           buscarDropdown.style.display = 'none';
            return;
          }
-         // position below button
+         // position the dropdown under the button (float)
          const rect = buscarBtn.getBoundingClientRect();
-         panel.style.position = 'absolute';
-         panel.style.left = `${rect.left}px`;
-         panel.style.top = `${rect.bottom + window.scrollY + 6}px`;
-         panel.style.minWidth = `${rect.width}px`;
-         panel.style.display = 'block';
-         panel.innerHTML = '<div class="buscar-list">Cargando...</div>';
-
+         buscarDropdown.style.position = 'absolute';
+         buscarDropdown.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+         buscarDropdown.style.left = (rect.left + window.scrollX) + 'px';
+         buscarDropdown.style.display = 'block';
+         // populate list from Drive
          try {
-           if (!driveAccessToken) {
-             await requestDriveToken(true);
-           }
-           if (!driveAccessToken) throw new Error('No drive token');
-           // list last 10 json files in folder
-           const q = encodeURIComponent(`'1nyPnBXUbMRuSBUNd45K7EN9OLkxbaMNO' in parents and mimeType='application/json'`);
-           const fields = encodeURIComponent('files(id,name,createdTime)');
-           const listUrl = `https://www.googleapis.com/drive/v3/files?q=${q}&orderBy=createdTime desc&pageSize=10&fields=${fields}`;
-           const listRes = await fetch(listUrl, {
-             method: 'GET',
-             headers: { Authorization: 'Bearer ' + driveAccessToken }
-           });
-           if (!listRes.ok) {
-             throw new Error('Error listando archivos: ' + listRes.statusText);
-           }
-           const listJson = await listRes.json();
-           const files = listJson.files || [];
-           const listEl = document.createElement('div');
-           listEl.className = 'buscar-list';
-           if (files.length === 0) {
-             listEl.innerHTML = '<div class="buscar-empty">No se encontraron respaldos en Drive</div>';
+           const files = await listBackupsFromDrive();
+           const listEl = document.getElementById('buscarList');
+           listEl.innerHTML = '';
+           if (!files || files.length === 0) {
+             listEl.innerHTML = '<div style="color:#666;padding:10px;">No hay respaldos en Drive.</div>';
            } else {
              files.forEach(f => {
-               const item = document.createElement('button');
-               item.className = 'buscar-item';
-               item.type = 'button';
-               item.textContent = `${f.name}`;
-               item.onclick = async () => {
-                 // fetch file content
+               const row = document.createElement('div');
+               row.style.padding = '8px 10px';
+               row.style.borderBottom = '1px solid rgba(0,0,0,0.06)';
+               row.style.cursor = 'pointer';
+               row.style.color = '#222';
+               row.style.background = '#fff';
+               row.title = f.name;
+               row.innerHTML = `<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
+                 <div style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name}</div>
+                 <div style="color:#666;font-size:0.85em">${new Date(f.createdTime).toLocaleString()}</div>
+               </div>`;
+               row.addEventListener('click', async () => {
+                 // download and restore selected backup
+                 buscarDropdown.style.display = 'none';
                  try {
-                   const getUrl = `https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`;
-                   const getRes = await fetch(getUrl, {
-                     method: 'GET',
-                     headers: { Authorization: 'Bearer ' + driveAccessToken }
-                   });
-                   if (!getRes.ok) {
-                     alert('Error descargando respaldo: ' + getRes.statusText);
-                     return;
+                   const state = await downloadBackupFromDrive(f.id);
+                   if (state) {
+                     restoreAppState(state);
+                     try {
+                       localStorage.setItem('last_backup_name', f.name);
+                       const el = document.getElementById('lastBackupName');
+                       if (el) el.textContent = f.name;
+                     } catch (e) { /* ignore */ }
+                     alert(`Respaldo "${f.name}" cargado correctamente.`);
+                   } else {
+                     alert('No se pudo obtener el respaldo seleccionado.');
                    }
-                   const state = await getRes.json();
-                   restoreAppState(state);
-                   // persist and update UI indicator
-                   try {
-                     localStorage.setItem('last_backup_name', f.name);
-                     const el = document.getElementById('lastBackupName');
-                     if (el) el.textContent = f.name;
-                   } catch (e) {}
-                   // close panel
-                   panel.style.display = 'none';
-                   alert(`Respaldo "${f.name}" cargado correctamente.`);
                  } catch (err) {
-                   console.error(err);
+                   console.error('Error cargando respaldo seleccionado:', err);
                    alert('Error cargando respaldo: ' + (err.message || err));
                  }
-               };
-               listEl.appendChild(item);
+               });
+               listEl.appendChild(row);
              });
            }
-           panel.innerHTML = '';
-           panel.appendChild(listEl);
          } catch (err) {
-           console.error('Error buscando respaldos:', err);
-           const panel = document.getElementById('buscarDropdown');
-           if (panel) panel.innerHTML = `<div class="buscar-error">Error al listar respaldos</div>`;
+           console.error('Error listando respaldos:', err);
+           const listEl = document.getElementById('buscarList');
+           if (listEl) listEl.innerHTML = `<div style="color:#c0392b;padding:10px;">Error listando respaldos: ${err.message || err}</div>`;
          }
-       };
-       // allow clicking outside to close
+       });
+
+       // Close buscar dropdown when clicking outside
        document.addEventListener('click', (ev) => {
-         const panel = document.getElementById('buscarDropdown');
-         if (!panel) return;
-         if (panel.style.display === 'block') {
-           const target = ev.target;
-           if (target === buscarBtn || buscarBtn.contains(target) || panel.contains(target)) return;
-           panel.style.display = 'none';
+         const buscarDropdown = document.getElementById('buscarDropdown');
+         const buscarBtnLocal = document.getElementById('buscarBtn');
+         if (!buscarDropdown) return;
+         if (buscarDropdown.style.display === 'block') {
+           if (!buscarDropdown.contains(ev.target) && ev.target !== buscarBtnLocal) {
+             buscarDropdown.style.display = 'none';
+           }
          }
        });
      }
    } catch (err) {
-     console.warn('No se pudo habilitar buscarBtn:', err);
+     console.warn('No se pudo habilitar Buscar:', err);
    }
 
    // Request Drive access token (consent prompt first time)
@@ -5405,4 +5375,51 @@ async function loadLatestBackupFromDrive() {
     console.error('Excepción cargando respaldo de Drive:', err);
     alert('Ocurrió un error al cargar respaldo: ' + (err.message || err));
   }
+}
+
+// List last 10 backup files in the fixed folder and return minimal info
+async function listBackupsFromDrive() {
+  if (!driveAccessToken) {
+    await requestDriveToken(true);
+  }
+  if (!driveAccessToken) throw new Error('No se ha obtenido token de Drive');
+
+  const q = encodeURIComponent(`'1nyPnBXUbMRuSBUNd45K7EN9OLkxbaMNO' in parents and mimeType='application/json'`);
+  const fields = encodeURIComponent('files(id,name,createdTime)');
+  const listUrl = `https://www.googleapis.com/drive/v3/files?q=${q}&orderBy=createdTime desc&pageSize=10&fields=${fields}`;
+
+  const listRes = await fetch(listUrl, {
+    method: 'GET',
+    headers: { Authorization: 'Bearer ' + driveAccessToken }
+  });
+
+  if (!listRes.ok) {
+    const t = await listRes.text();
+    throw new Error('Error listando archivos en Drive: ' + (listRes.statusText || t));
+  }
+
+  const listJson = await listRes.json();
+  return listJson.files || [];
+}
+
+// Download a specific backup file by ID and return parsed JSON state
+async function downloadBackupFromDrive(fileId) {
+  if (!driveAccessToken) {
+    await requestDriveToken(true);
+  }
+  if (!driveAccessToken) throw new Error('No se ha obtenido token de Drive');
+
+  const getUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
+  const getRes = await fetch(getUrl, {
+    method: 'GET',
+    headers: { Authorization: 'Bearer ' + driveAccessToken }
+  });
+
+  if (!getRes.ok) {
+    const t = await getRes.text();
+    throw new Error('Error descargando respaldo: ' + (getRes.statusText || t));
+  }
+
+  const state = await getRes.json();
+  return state;
 }

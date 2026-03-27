@@ -99,10 +99,14 @@
             <div style="flex:0 0 auto; display:flex; gap:8px; align-items:center;">
               <div class="backup-dropdown" style="display:flex;gap:8px;align-items:center;">
                 <button id="backupButton" class="backup-btn">Respaldo</button>
-                <button id="buscarBtn" class="backup-btn">Buscar</button>
+                <button id="buscarBtn" class="backup-btn" disabled>Buscar</button>
                 <div id="backupDropdown" class="backup-options">
                   <button id="backupSave" class="backup-option">Respaldar</button>
                   <button id="backupRestore" class="backup-option">Restaurar</button>
+                </div>
+                <!-- Buscar dropdown will be populated dynamically when Google user is signed in -->
+                <div id="buscarDropdown" class="backup-options" style="min-width:260px;display:none;right:0;left:auto;">
+                  <div id="buscarList" style="max-height:320px;overflow:auto;"></div>
                 </div>
               </div>
             </div>
