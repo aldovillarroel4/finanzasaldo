@@ -5031,27 +5031,32 @@ let currentGoogleUser = null;
      };
    }
 
-   // Enable Buscar button and wire its click behavior
+   // Enable Buscar button and wire its click behavior (single handler, only when signed in)
    try {
      const buscarBtn = document.getElementById('buscarBtn');
      if (buscarBtn) {
        buscarBtn.disabled = false;
-       buscarBtn.addEventListener('click', async (e) => {
+
+       // ensure we don't attach multiple handlers: use onclick assignment
+       buscarBtn.onclick = async (e) => {
          e.stopPropagation();
-         // toggle dropdown visibility
          const buscarDropdown = document.getElementById('buscarDropdown');
          if (!buscarDropdown) return;
+
+         // toggle visibility
          if (buscarDropdown.style.display === 'block') {
            buscarDropdown.style.display = 'none';
            return;
          }
-         // position the dropdown under the button (float)
+
+         // position floating dropdown under button
          const rect = buscarBtn.getBoundingClientRect();
          buscarDropdown.style.position = 'absolute';
          buscarDropdown.style.top = (rect.bottom + window.scrollY + 6) + 'px';
          buscarDropdown.style.left = (rect.left + window.scrollX) + 'px';
          buscarDropdown.style.display = 'block';
-         // populate list from Drive
+
+         // populate with last 10 backups from Drive
          try {
            const files = await listBackupsFromDrive();
            const listEl = document.getElementById('buscarList');
@@ -5072,7 +5077,7 @@ let currentGoogleUser = null;
                  <div style="color:#666;font-size:0.85em">${new Date(f.createdTime).toLocaleString()}</div>
                </div>`;
                row.addEventListener('click', async () => {
-                 // download and restore selected backup
+                 // hide dropdown and download selected backup
                  buscarDropdown.style.display = 'none';
                  try {
                    const state = await downloadBackupFromDrive(f.id);
@@ -5100,10 +5105,10 @@ let currentGoogleUser = null;
            const listEl = document.getElementById('buscarList');
            if (listEl) listEl.innerHTML = `<div style="color:#c0392b;padding:10px;">Error listando respaldos: ${err.message || err}</div>`;
          }
-       });
+       };
 
-       // Close buscar dropdown when clicking outside
-       document.addEventListener('click', (ev) => {
+       // Close buscar dropdown when clicking outside (ensure only one handler)
+       const outerClickHandler = (ev) => {
          const buscarDropdown = document.getElementById('buscarDropdown');
          const buscarBtnLocal = document.getElementById('buscarBtn');
          if (!buscarDropdown) return;
@@ -5112,7 +5117,11 @@ let currentGoogleUser = null;
              buscarDropdown.style.display = 'none';
            }
          }
-       });
+       };
+
+       // Remove any existing duplicate handler marker and attach once
+       document.removeEventListener('click', outerClickHandler);
+       document.addEventListener('click', outerClickHandler);
      }
    } catch (err) {
      console.warn('No se pudo habilitar Buscar:', err);
