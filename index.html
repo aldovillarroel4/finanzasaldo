@@ -990,7 +990,36 @@
         const weekdayNames = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
         container.innerHTML = '';
-        const keys = Array.from(map.keys()).sort();
+        // Sort date keys so newest dates appear first (leftmost). Try parsing known formats,
+        // fallback to lexicographic if parsing fails.
+        const keys = Array.from(map.keys()).sort((a, b) => {
+          function parseDateStringLocal(s){
+            if(!s || typeof s !== 'string') return null;
+            s = s.trim();
+            const isoMatch = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+            if(isoMatch){
+              const y = parseInt(isoMatch[1],10), m = parseInt(isoMatch[2],10)-1, d = parseInt(isoMatch[3],10);
+              const dObj = new Date(y,m,d);
+              return isNaN(dObj) ? null : dObj;
+            }
+            const dm = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+            if(dm){
+              let day = parseInt(dm[1],10), month = parseInt(dm[2],10)-1, year = parseInt(dm[3],10);
+              if(year < 100) year += 2000;
+              const dObj = new Date(year, month, day);
+              return isNaN(dObj) ? null : dObj;
+            }
+            const fallback = new Date(s);
+            return isNaN(fallback) ? null : fallback;
+          }
+          const da = parseDateStringLocal(a);
+          const db = parseDateStringLocal(b);
+          if (da && db) return db - da; // newest first
+          if (da && !db) return -1;
+          if (!da && db) return 1;
+          // fallback lexicographic (reverse to get recent-looking strings first)
+          return b.localeCompare(a);
+        });
         keys.forEach(dateKey => {
           const entry = map.get(dateKey);
           const card = document.createElement('div');
